@@ -1,0 +1,122 @@
+syntax = "proto3";
+package catalog;
+option go_package="github.com/ilnurcode/Kinos/proto/catalog;catalog";
+import "google/protobuf/empty.proto";
+service CatalogService{
+  //Категории
+  rpc CreateCategory(CreateCategoryRequest) returns (Category);
+  rpc UpdateCategory(UpdateCategoryRequest) returns (Category);
+  rpc GetCategory(GetCategoryRequest) returns (Category);
+  rpc GetListCategory(GetListCategoryRequest) returns(ListCategoriesResponse);
+  rpc DeleteCategory(DeleteCategoryRequest) returns(google.protobuf.Empty);
+
+  //Товары
+  rpc CreateProduct(CreateProductRequest) returns(Product);
+  rpc UpdateProduct(UpdateProductRequest) returns(Product);
+  rpc DeleteProduct(DeleteProductRequest) returns(google.protobuf.Empty);
+  rpc GetProduct(GetProductRequest) returns(Product);
+  rpc GetListProduct(GetListProductRequest) returns(ListProductsResponse);
+  //Производители
+  rpc CreateManufacturer(CreateManufacturerRequest) returns(Manufacturer);
+  rpc UpdateManufacturer(UpdateManufacturerRequest) returns(Manufacturer);
+  rpc GetManufacturer(GetManufacturerRequest) returns(Manufacturer);
+  rpc GetListManufacturers(GetListManufacturerRequest) returns (ListManufacturerResponse);
+  rpc DeleteManufacturer(DeleteManufacturerRequest) returns (google.protobuf.Empty);
+}
+
+//Запросы категории
+message CreateCategoryRequest{
+  string name=1;
+}
+message UpdateCategoryRequest{
+  uint64 id=1;
+  string name=2;
+}
+message GetCategoryRequest{
+  string name=1;;
+}
+message GetListCategoryRequest{
+  int32 limit=1;
+  int32 offset=2;
+}
+message DeleteCategoryRequest{
+  uint64 id=1;
+}
+//Ответы категории
+message Category{
+  uint64 id=1;
+  string name=2;
+}
+message ListCategoriesResponse{
+  repeated Category category=1;
+  int32 total=2;
+}
+
+//Запросы товаров
+message CreateProductRequest{
+  string name=1;
+  uint64 manufacturer_id=2;
+  uint64 category_id=3;
+  double price=4;
+}
+message UpdateProductRequest{
+  uint64 id=1;
+  string name=2;
+  uint64 manufacturer_id=3;
+  uint64 category_id=4;
+  double price=5;
+}
+message GetProductRequest{
+  string name=1;;
+}
+message GetListProductRequest{
+  int32 limit=1;
+  int32 offset=2;
+  uint64 category_id=3;
+  uint64 manufacturer_id=4;
+  double price_min=5;
+  double price_max=6;
+  string name_contains=7;
+}
+message DeleteProductRequest{
+  uint64 id=1;
+}
+//Ответы товаров
+message Product{
+  uint64 id=1;
+  string name=2;
+  uint64 manufacturer_id=3;
+  uint64 category_id=4;
+  double price=5;
+}
+message ListProductsResponse{
+  repeated Product product=1;
+  int32 total=2;
+}
+//Запросы производителей
+message CreateManufacturerRequest{
+  string name=1;
+}
+message UpdateManufacturerRequest{
+  uint64 id=1;
+  string name=2;
+}
+message GetManufacturerRequest{
+  string name=1;
+}
+message GetListManufacturerRequest{
+  int32 limit=1;
+  int32 offset=2;
+}
+message DeleteManufacturerRequest{
+  uint64 id=1;
+}
+//Ответы производителей
+message Manufacturer{
+  uint64 id=1;
+  string name=2;
+}
+message ListManufacturerResponse{
+  repeated Manufacturer manufacturer=1;
+  int32 total=2;
+}
