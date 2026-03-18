@@ -13,18 +13,18 @@
 │  (Frontend)     │
 └────────┬────────┘
          │ gRPC
-    ┌────┴────┐
-    │         │
-┌───▼────┐  ┌─▼──────────┐
-│ User   │  │ Catalog    │
-│ Service│  │ Service    │
-│ :8081  │  │ :8082      │
-└───┬────┘  └────┬───────┘
-    │            │
-┌───▼────┐  ┌───▼────────┐
-│PostgreSQL│ │PostgreSQL  │
-│user_db   │ │catalog_db  │
-└──────────┘ └────────────┘
+    ┌────┴────┬──────────┐
+    │         │          │
+┌───▼────┐  ┌─▼──────┐ ┌─▼──────────┐
+│ User   │  │Catalog │ │ Inventory  │
+│ Service│  │Service │ │ Service    │
+│ :8081  │  │:8082   │ │ :8083      │
+└───┬────┘  └───┬────┘ └────┬───────┘
+    │           │           │
+┌───▼────┐  ┌───▼──────┐ ┌──▼────────┐
+│PostgreSQL│ │PostgreSQL│ │PostgreSQL │
+│user_db   │ │catalog_db│ │inventory_db│
+└──────────┘ └──────────┘ └───────────┘
 ```
 
 ## 📦 Сервисы
@@ -34,6 +34,7 @@
 | **api-service** | 8080 | API-шлюз, HTTP/REST, Web UI |
 | **user-service** | 8081 | Управление пользователями, аутентификация |
 | **catalog-service** | 8082 | Управление каталогом товаров |
+| **inventory-service** | 8083 | Управление запасами товаров, резервирование |
 
 ## 🚀 Быстрый старт
 
@@ -56,6 +57,7 @@ docker-compose ps
 - API Service: http://localhost:8080
 - User Service (gRPC): localhost:8081
 - Catalog Service (gRPC): localhost:8082
+- Inventory Service (gRPC): localhost:8083
 
 ### Локальная разработка
 
@@ -77,6 +79,10 @@ cd services/api-service && go run ./cmd/main.go
 | POST | `/api/users/login` | Вход |
 | GET | `/api/catalog/categories` | Список категорий |
 | GET | `/api/catalog/products` | Список товаров |
+| GET | `/api/inventory` | Запас товара по ID |
+| GET | `/api/inventory/list` | Список запасов |
+| POST | `/api/inventory/reserve` | Резервирование товара |
+| POST | `/api/inventory/release` | Снятие резервирования |
 
 ### Защищённые endpoints
 
@@ -123,7 +129,8 @@ kinos/
 ├── services/
 │   ├── api-service/         # API-шлюз
 │   ├── user-service/        # Сервис пользователей
-│   └── catalog-service/     # Сервис каталога
+│   ├── catalog-service/     # Сервис каталога
+│   └── inventory-service/   # Сервис управления запасами
 ├── docker-compose.yaml      # Docker конфигурация
 ├── Makefile                 # Автоматизация задач
 └── README.md                # Документация

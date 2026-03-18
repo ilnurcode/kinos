@@ -25,6 +25,19 @@ services:
       catalog-db:
         condition: service_healthy
 
+  inventory-service:
+    build:
+      context: .
+      dockerfile: services/inventory-service/Dockerfile
+    container_name: kinos-inventory-service
+    env_file:
+      - ./services/inventory-service/.env.docker
+    ports:
+      - "8083:8083"
+    depends_on:
+      inventory-db:
+        condition: service_healthy
+
   api-service:
     build:
       context: .
@@ -35,6 +48,7 @@ services:
     depends_on:
       - user-service
       - catalog-service
+      - inventory-service
 
   user-db:
     image: postgres:18.2-bookworm
@@ -46,7 +60,7 @@ services:
     volumes:
       - user_db_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kinos -d user_db"]
+      test: [ "CMD-SHELL", "pg_isready -U kinos -d user_db" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -60,7 +74,22 @@ services:
     volumes:
       - catalog_db_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kinos -d catalog_db"]
+      test: [ "CMD-SHELL", "pg_isready -U kinos -d catalog_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  inventory-db:
+    image: postgres:18.2-bookworm
+    container_name: inventory-db
+    environment:
+      POSTGRES_DB: inventory_db
+      POSTGRES_USER: kinos
+      POSTGRES_PASSWORD: kinos123
+    volumes:
+      - inventory_db_data:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U kinos -d inventory_db" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -68,3 +97,5 @@ services:
 volumes:
   user_db_data:
   catalog_db_data:
+  inventory_db_data:
+  warehouse_db_data:

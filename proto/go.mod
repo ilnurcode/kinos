@@ -1,6 +1,6 @@
 module kinos/proto
 
-go 1.25
+go 1.26.1
 
 require (
 	google.golang.org/grpc v1.79.1

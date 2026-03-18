@@ -1,0 +1,124 @@
+syntax = "proto3";
+package inventory;
+option go_package="github.com/ilnurcode/Kinos/proto/inventory;inventory";
+import "google/protobuf/empty.proto";
+
+service InventoryService {
+  // Управление запасами товаров
+  rpc CreateInventory(CreateInventoryRequest) returns (Inventory);
+  rpc UpdateInventory(UpdateInventoryRequest) returns (Inventory);
+  rpc GetInventory(GetInventoryRequest) returns (Inventory);
+  rpc GetListInventory(GetListInventoryRequest) returns (ListInventoryResponse);
+  rpc DeleteInventory(DeleteInventoryRequest) returns (google.protobuf.Empty);
+
+  // Резервирование товаров
+  rpc ReserveStock(ReserveStockRequest) returns (ReserveStockResponse);
+  rpc ReleaseReservation(ReleaseReservationRequest) returns (ReleaseReservationResponse);
+
+  // Управление складами
+  rpc CreateWarehouse(CreateWarehouseRequest) returns (Warehouse);
+  rpc GetListWarehouse(GetListWarehouseRequest) returns (ListWarehouseResponse);
+  rpc DeleteWarehouse(DeleteWarehouseRequest) returns (google.protobuf.Empty);
+}
+
+// Запросы для управления запасами
+message CreateInventoryRequest {
+  uint64 product_id = 1;
+  int32 quantity = 2;
+  string warehouse_location = 3;
+}
+
+message UpdateInventoryRequest {
+  uint64 id = 1;
+  int32 quantity = 2;
+  string warehouse_location = 3;
+}
+
+message GetInventoryRequest {
+  uint64 product_id = 1;
+}
+
+message GetListInventoryRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  uint64 product_id = 3;
+  string warehouse_location = 4;
+  int32 min_quantity = 5;
+}
+
+message DeleteInventoryRequest {
+  uint64 id = 1;
+}
+
+// Запросы для резервирования
+message ReserveStockRequest {
+  uint64 product_id = 1;
+  int32 quantity = 2;
+  string reservation_id = 3;
+}
+
+message ReleaseReservationRequest {
+  uint64 product_id = 1;
+  string reservation_id = 2;
+}
+
+// Запросы для управления складами
+message CreateWarehouseRequest {
+  string name = 1;
+  string city = 2;
+  string street = 3;
+  string building = 4;
+  string building2 = 5;
+}
+
+message GetListWarehouseRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message DeleteWarehouseRequest {
+  uint64 id = 1;
+}
+
+// Ответы для складов
+message Warehouse {
+  uint64 id = 1;
+  string name = 2;
+  string city = 3;
+  string street = 4;
+  string building = 5;
+  string building2 = 6;
+  string created_at = 7;
+}
+
+message ListWarehouseResponse {
+  repeated Warehouse warehouses = 1;
+  int32 total = 2;
+}
+
+// Ответы
+message Inventory {
+  uint64 id = 1;
+  uint64 product_id = 2;
+  int32 quantity = 3;
+  int32 reserved_quantity = 4;
+  int32 available_quantity = 5;
+  string warehouse_location = 6;
+  string updated_at = 7;
+}
+
+message ListInventoryResponse {
+  repeated Inventory inventory = 1;
+  int32 total = 2;
+}
+
+message ReserveStockResponse {
+  bool success = 1;
+  string reservation_id = 2;
+  int32 reserved_quantity = 3;
+}
+
+message ReleaseReservationResponse {
+  bool success = 1;
+  int32 released_quantity = 2;
+}

@@ -6,9 +6,6 @@ import (
 	"context"
 	"html/template"
 	"io/fs"
-	"kinos/api-service"
-	"kinos/api-service/internal/api/catalog"
-	"kinos/api-service/internal/api/users"
 	"log"
 	"net/http"
 	"os"
@@ -16,12 +13,17 @@ import (
 	"syscall"
 	"time"
 
+	assets "kinos/api-service"
+	"kinos/api-service/internal/api/catalog"
+	"kinos/api-service/internal/api/inventory"
+	"kinos/api-service/internal/api/users"
+
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	router := gin.Default()
-	
+
 	// Явно указываем все шаблоны для правильного сохранения имён
 	tmpl := template.Must(template.ParseFS(assets.FS,
 		"templates/index.html",
@@ -34,9 +36,11 @@ func main() {
 		"templates/admin/categories.html",
 		"templates/admin/manufacturers.html",
 		"templates/admin/products.html",
+		"templates/admin/inventory.html",
+		"templates/admin/warehouses.html",
 	))
 	router.SetHTMLTemplate(tmpl)
-	
+
 	staticFS, err := fs.Sub(assets.FS, "static")
 	if err != nil {
 		log.Fatal(err)
@@ -45,14 +49,32 @@ func main() {
 
 	userClient := users.NewUserClient("user-service:8081")
 	catalogClient := catalog.NewCatalogClient("catalog-service:8082")
+	inventoryClient := inventory.NewInventoryClient("inventory-service:8083")
 
 	userHandler := users.NewHandler(userClient)
 	catalogHandler := catalog.NewHandler(catalogClient)
+	inventoryHandler := inventory.NewHandler(inventoryClient)
 
 	authMiddleware := users.NewAuthMiddleware(userClient)
 	api := router.Group("/api")
 
 	{
+		apiInventory := api.Group("/inventory")
+		{
+			apiInventory.GET("", inventoryHandler.GetInventory)
+			apiInventory.GET("/list", inventoryHandler.GetListInventory)
+			apiInventory.POST("", inventoryHandler.CreateInventory)
+			apiInventory.PUT("/:id", inventoryHandler.UpdateInventory)
+			apiInventory.DELETE("/:id", inventoryHandler.DeleteInventory)
+			apiInventory.POST("/reserve", inventoryHandler.ReserveStock)
+			apiInventory.POST("/release", inventoryHandler.ReleaseReservation)
+
+			// Склады
+			apiInventory.GET("/warehouses/list", inventoryHandler.GetListWarehouse)
+			apiInventory.POST("/warehouses", inventoryHandler.CreateWarehouse)
+			apiInventory.DELETE("/warehouses/:id", inventoryHandler.DeleteWarehouse)
+		}
+
 		apiCatalog := api.Group("/catalog")
 		{
 			apiCatalog.GET("/category", catalogHandler.GetCategory)
@@ -105,7 +127,9 @@ func main() {
 	}
 
 	router.GET("/", func(c *gin.Context) { c.HTML(http.StatusOK, "index.html", gin.H{"title": "Welcome to Kinos!"}) })
-	router.GET("/catalog", func(c *gin.Context) { c.HTML(http.StatusOK, "catalog.html", gin.H{"title": "Каталог товаров"}) })
+	router.GET("/catalog", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "catalog.html", gin.H{"title": "Каталог товаров"})
+	})
 	router.GET("/register", func(c *gin.Context) { c.HTML(http.StatusOK, "registration.html", gin.H{"title": "Registration"}) })
 	router.GET("/login", func(c *gin.Context) { c.HTML(http.StatusOK, "login.html", gin.H{"title": "Login"}) })
 
@@ -122,6 +146,12 @@ func main() {
 	router.GET("/admin/products", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "products.html", gin.H{"title": "Управление товарами"})
 	})
+	router.GET("/admin/inventory", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "inventory.html", gin.H{"title": "Управление запасами"})
+	})
+	router.GET("/admin/warehouses", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "warehouses.html", gin.H{"title": "Управление складами"})
+	})
 
 	// HTML страницы профиля — без middleware, аутентификация через JS
 	router.GET("/profile", func(c *gin.Context) {
@@ -129,6 +159,11 @@ func main() {
 	})
 	router.GET("/profile/edit", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "edit_profile.html", gin.H{"title": "Редактирование профиля"})
+	})
+
+	// Health check endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok", "timestamp": time.Now()})
 	})
 
 	srv := &http.Server{
@@ -141,7 +176,6 @@ func main() {
 	go func() {
 		log.Println("Server started on :8080")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()

@@ -65,13 +65,21 @@ func (r *UserRepository) FindUserByID(ctx context.Context, ID uint64) (*models.U
 func (r *UserRepository) CreateUser(ctx context.Context, username, email, password, phone string) (uint64, error) {
 	querier := GetQuerier(ctx, r.DB)
 	var userID uint64
+
+	// Если телефон пустой, сохраняем NULL
+	var phoneVal interface{}
+	if phone == "" {
+		phoneVal = nil
+	} else {
+		phoneVal = phone
+	}
+
 	err := querier.QueryRow(ctx,
 		`INSERT INTO users (username, email, phone, hashed_password)
          VALUES ($1, $2, $3, $4)
          RETURNING user_ID`,
-		username, email, phone, password,
+		username, email, phoneVal, password,
 	).Scan(&userID)
-
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -95,7 +103,8 @@ func (r *UserRepository) UpdateProfile(ctx context.Context,
 	ID uint64,
 	Username string,
 	Email string,
-	Phone string) error {
+	Phone string,
+) error {
 	querier := GetQuerier(ctx, r.DB)
 	user, err := r.FindUserByID(ctx, ID)
 	if err != nil {
@@ -105,7 +114,16 @@ func (r *UserRepository) UpdateProfile(ctx context.Context,
 	if err == nil && user.Email != Email {
 		return fmt.Errorf("user with email %s already exists", Email)
 	}
-	_, err = querier.Exec(ctx, "Update users set username=$2, email=$3, phone=$4 where user_ID=$1", ID, Username, Email, Phone)
+
+	// Если телефон пустой, сохраняем NULL
+	var phoneVal interface{}
+	if Phone == "" {
+		phoneVal = nil
+	} else {
+		phoneVal = Phone
+	}
+
+	_, err = querier.Exec(ctx, "Update users set username=$2, email=$3, phone=$4 where user_ID=$1", ID, Username, Email, phoneVal)
 	if err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
 	}

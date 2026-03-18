@@ -21,6 +21,7 @@ func NewHandler(uc UserClientInterface) *Handler {
 		UserClient: uc,
 	}
 }
+
 func maxAgeFromUnix(ts int64) int {
 	exp := time.Unix(ts, 0)
 	secs := int(time.Until(exp).Seconds())
@@ -46,12 +47,17 @@ func (h *Handler) Register(c *gin.Context) {
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "already exists") {
 			c.JSON(http.StatusConflict, gin.H{"error": "Пользователь с таким email уже существует"})
+		} else if strings.Contains(errMsg, "телефон") {
+			// Возвращаем ошибку валидации телефона
+			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+		} else if strings.Contains(errMsg, "Validation") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при регистрации"})
 		}
 		return
 	}
-	http.SetCookie(c.Writer, &http.Cookie{Name: "refresh_token", Value: resp.RefreshToken, Path: "/", HttpOnly: true, Secure: false, SameSite: http.SameSiteLaxMode, MaxAge: maxAgeFromUnix(resp.RefreshExpiresAt)})
+	http.SetCookie(c.Writer, &http.Cookie{Name: "refresh_token", Value: resp.RefreshToken, Path: "/", HttpOnly: true, Secure: true, SameSite: http.SameSiteStrictMode, MaxAge: maxAgeFromUnix(resp.RefreshExpiresAt)})
 	c.JSON(http.StatusOK, gin.H{"access_token": resp.AccessToken})
 }
 
@@ -69,13 +75,13 @@ func (h *Handler) Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный email или пароль"})
 		return
 	}
-	http.SetCookie(c.Writer, &http.Cookie{Name: "refresh_token", Value: resp.RefreshToken, Path: "/", HttpOnly: true, Secure: false, SameSite: http.SameSiteLaxMode, MaxAge: maxAgeFromUnix(resp.RefreshExpiresAt)})
+	http.SetCookie(c.Writer, &http.Cookie{Name: "refresh_token", Value: resp.RefreshToken, Path: "/", HttpOnly: true, Secure: true, SameSite: http.SameSiteStrictMode, MaxAge: maxAgeFromUnix(resp.RefreshExpiresAt)})
 	c.JSON(http.StatusOK, gin.H{"access_token": resp.AccessToken})
 }
 
 func (h *Handler) Revoke(c *gin.Context) {
 	refreshToken, _ := c.Cookie("refresh_token")
-	http.SetCookie(c.Writer, &http.Cookie{Name: "refresh_token", Value: "", Path: "/", HttpOnly: true, Secure: false, SameSite: http.SameSiteLaxMode, MaxAge: -1})
+	http.SetCookie(c.Writer, &http.Cookie{Name: "refresh_token", Value: "", Path: "/", HttpOnly: true, Secure: true, SameSite: http.SameSiteStrictMode, MaxAge: -1})
 	if refreshToken != "" {
 		_, err := h.UserClient.RevokeRefreshToken(c.Request.Context(), refreshToken)
 		if err != nil {
@@ -96,7 +102,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid refresh token"})
 		return
 	}
-	http.SetCookie(c.Writer, &http.Cookie{Name: "refresh_token", Value: resp.RefreshToken, Path: "/", HttpOnly: true, Secure: false, SameSite: http.SameSiteLaxMode, MaxAge: maxAgeFromUnix(resp.RefreshExpiresAt)})
+	http.SetCookie(c.Writer, &http.Cookie{Name: "refresh_token", Value: resp.RefreshToken, Path: "/", HttpOnly: true, Secure: true, SameSite: http.SameSiteStrictMode, MaxAge: maxAgeFromUnix(resp.RefreshExpiresAt)})
 	c.JSON(http.StatusOK, gin.H{"access_token": resp.AccessToken})
 }
 

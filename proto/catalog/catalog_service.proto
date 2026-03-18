@@ -33,7 +33,7 @@ message UpdateCategoryRequest{
   string name=2;
 }
 message GetCategoryRequest{
-  string name=1;;
+  string name=1;
 }
 message GetListCategoryRequest{
   int32 limit=1;
@@ -67,7 +67,7 @@ message UpdateProductRequest{
   double price=5;
 }
 message GetProductRequest{
-  string name=1;;
+  string name=1;
 }
 message GetListProductRequest{
   int32 limit=1;

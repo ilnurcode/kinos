@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="ru">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,73 +8,76 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/css/styles.css" rel="stylesheet">
 </head>
+
 <body>
-<!-- Навигационная панель -->
-<nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="/">Kinos</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="/">Главная</a></li>
-                <li class="nav-item"><a class="nav-link" href="/catalog">Каталог</a></li>
-                <li class="nav-item d-none" id="nav-login"><a class="nav-link" href="/login">Вход</a></li>
-                <li class="nav-item d-none" id="nav-register"><a class="nav-link" href="/register">Регистрация</a></li>
-                <li class="nav-item" id="nav-profile"><a class="nav-link" href="/profile">Профиль</a></li>
-                <li class="nav-item d-none" id="nav-admin"><a class="nav-link text-warning" href="/admin/users">Админ</a></li>
-                <li class="nav-item" id="nav-logout"><a class="nav-link text-danger" href="#" id="logoutBtn">Выйти</a></li>
-            </ul>
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">Kinos</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Главная</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/catalog">Каталог</a></li>
+                    <li class="nav-item d-none" id="nav-login"><a class="nav-link" href="/login">Вход</a></li>
+                    <li class="nav-item d-none" id="nav-register"><a class="nav-link" href="/register">Регистрация</a>
+                    </li>
+                    <li class="nav-item" id="nav-profile"><a class="nav-link" href="/profile">Профиль</a></li>
+                    <li class="nav-item d-none" id="nav-admin"><a class="nav-link text-warning"
+                            href="/admin/users">Админ</a></li>
+                    <li class="nav-item" id="nav-logout"><a class="nav-link text-danger" href="#"
+                            id="logoutBtn">Выйти</a></li>
+                </ul>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
-<main class="container py-5">
-    <div class="profile-card card shadow-md">
-        <div class="card-header">
-            <h4 class="mb-0">Редактирование профиля</h4>
-        </div>
-        <div class="card-body">
-            <form id="editProfileForm" class="mt-3">
-                <div class="mb-3">
-                    <label class="form-label">Имя пользователя</label>
-                    <input type="text" class="form-control" id="username" name="username" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Телефон</label>
-                    <div class="input-group">
-                        <span class="input-group-text">+7</span>
-                        <input type="tel" class="form-control" id="phone" name="phone" pattern="^\+7\d{10}$" placeholder="999 123 45 67" maxlength="16">
+    <main class="container py-5">
+        <div class="profile-card card shadow-md">
+            <div class="card-header">
+                <h4 class="mb-0">Редактирование профиля</h4>
+            </div>
+            <div class="card-body">
+                <form id="editProfileForm" class="mt-3">
+                    <div class="mb-3">
+                        <label class="form-label">Имя пользователя</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
                     </div>
-                    <small class="text-muted">Введите 10 цифр номера (например: 999 123 45 67)</small>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Сохранить</button>
-                    <a href="/profile" class="btn btn-secondary">Отмена</a>
-                </div>
-            </form>
-            <div id="message" class="alert mt-3" style="display:none;"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Телефон</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="+7 (___) ___-__-__"
+                            maxlength="18">
+                        <small class="text-muted">Формат: +7 (999) 123-45-67</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <a href="/profile" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+                <div id="message" class="alert mt-3" style="display:none;"></div>
+            </div>
         </div>
-    </div>
-</main>
+    </main>
 
-<!-- Подвал -->
-<footer class="py-3 mt-auto">
-    <div class="container text-center text-muted small">
-        &copy; <span id="year"></span> Kinos. Все права защищены.
-    </div>
-</footer>
+    <!-- Подвал -->
+    <footer class="py-3 mt-auto">
+        <div class="container text-center text-muted small">
+            &copy; <span id="year"></span> Kinos. Все права защищены.
+        </div>
+    </footer>
 
-<!-- Скрипты -->
-<script src="/static/js/auth.js"></script>
-<script src="/static/js/api.js"></script>
-<script src="/static/js/edit_profile.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+    <!-- Скрипты -->
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/edit_profile.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 </body>
+
 </html>

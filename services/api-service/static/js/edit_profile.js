@@ -8,27 +8,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     const message = document.getElementById('message');
     const phoneInput = document.getElementById('phone');
 
-    // Маска телефона: +7 XXX XXX XX XX
+    if (!form) {
+        console.error('Форма редактирования профиля не найдена');
+        return;
+    }
+
+    // Маска телефона: +7 (___) ___-__-__
     phoneInput.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
+        // Удаляем все нецифровые символы
+        let digits = e.target.value.replace(/\D/g, '');
 
-        if (value.length > 11) {
-            value = value.substring(0, 11);
+        // Если пользователь начинает вводить с 8, заменяем на 7
+        if (digits.startsWith('8')) {
+            digits = '7' + digits.substring(1);
         }
 
-        if (value.length > 1) {
-            value = '+7 ' + value.substring(1, 4) +
-                    (value.length > 4 ? ' ' + value.substring(4, 7) : '') +
-                    (value.length > 7 ? ' ' + value.substring(7, 9) : '') +
-                    (value.length > 9 ? ' ' + value.substring(9, 11) : '');
+        // Добавляем 7 в начало если нет
+        if (!digits.startsWith('7')) {
+            digits = '7' + digits;
         }
 
-        e.target.value = value;
-    });
+        // Ограничиваем 11 цифрами (7 + 10 цифр номера)
+        if (digits.length > 11) {
+            digits = digits.substring(0, 11);
+        }
 
-    // Перед отправкой удаляем пробелы
-    form.addEventListener('submit', (e) => {
-        phoneInput.value = phoneInput.value.replace(/\D/g, '');
+        // Форматируем: +7 (XXX) XXX-XX-XX
+        let formatted = '+7';
+        if (digits.length > 1) {
+            formatted += ' (' + digits.substring(1, 4);
+        }
+        if (digits.length > 4) {
+            formatted += ') ' + digits.substring(4, 7);
+        }
+        if (digits.length > 7) {
+            formatted += '-' + digits.substring(7, 9);
+        }
+        if (digits.length > 9) {
+            formatted += '-' + digits.substring(9, 11);
+        }
+
+        e.target.value = formatted;
     });
 
     try {
@@ -51,13 +71,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         const btn = form.querySelector('button');
         btn.disabled = true;
 
+        // Получаем только цифры из телефона
+        const phoneDigits = phoneInput.value.replace(/\D/g, '');
+
+        // Формируем телефон в формате E.164
+        let phoneE164 = '+' + phoneDigits;
+
         try {
             const response = await apiRequest('/api/profile', {
                 method: 'PUT',
                 body: JSON.stringify({
                     username: form.username.value.trim(),
                     email: form.email.value.trim(),
-                    phone: '+7' + form.phone.value.trim()
+                    phone: phoneE164
                 })
             });
 

@@ -1,5 +1,5 @@
 # Makefile для проекта Kinos
-# Микросервисная архитектура: api-service, user-service, catalog-service
+# Микросервисная архитектура: api-service, user-service, catalog-service, inventory-service
 
 .PHONY: help build run test clean docker-up docker-down docker-restart proto generate migrate
 
@@ -19,7 +19,7 @@ help: ## Показать список всех команд
 # ==============================================================================
 # Сборка Go проектов
 # ==============================================================================
-build: build-api build-user build-catalog ## Собрать все сервисы
+build: build-api build-user build-catalog build-inventory ## Собрать все сервисы
 
 build-api: ## Собрать api-service
 	@echo ">>> Сборка api-service..."
@@ -33,10 +33,14 @@ build-catalog: ## Собрать catalog-service
 	@echo ">>> Сборка catalog-service..."
 	cd services/catalog-service && go build -o ../../bin/catalog-service ./cmd
 
+build-inventory: ## Собрать inventory-service
+	@echo ">>> Сборка inventory-service..."
+	cd services/inventory-service && go build -o ../../bin/inventory-service ./cmd
+
 # ==============================================================================
 # Запуск Go проектов (локально)
 # ==============================================================================
-run: run-api run-user run-catalog ## Запустить все сервисы (отдельные терминалы)
+run: run-api run-user run-catalog run-inventory ## Запустить все сервисы (отдельные терминалы)
 
 run-api: ## Запустить api-service
 	@echo ">>> Запуск api-service на :8080"
@@ -49,6 +53,10 @@ run-user: ## Запустить user-service
 run-catalog: ## Запустить catalog-service
 	@echo ">>> Запуск catalog-service на :8082"
 	cd services/catalog-service && go run ./cmd/main.go
+
+run-inventory: ## Запустить inventory-service
+	@echo ">>> Запуск inventory-service на :8083"
+	cd services/inventory-service && go run ./cmd/main.go
 
 # ==============================================================================
 # Docker Compose
@@ -81,6 +89,9 @@ docker-logs-user: ## Показать логи user-service
 docker-logs-catalog: ## Показать логи catalog-service
 	docker-compose logs -f catalog-service
 
+docker-logs-inventory: ## Показать логи inventory-service
+	docker-compose logs -f inventory-service
+
 docker-ps: ## Показать статус контейнеров
 	docker-compose ps
 
@@ -91,7 +102,7 @@ docker-clean: ## Очистить Docker кэш
 # ==============================================================================
 # Тестирование
 # ==============================================================================
-test: test-api test-user test-catalog ## Запустить тесты всех сервисов
+test: test-api test-user test-catalog test-inventory ## Запустить тесты всех сервисов
 
 test-api: ## Запустить тесты api-service
 	@echo ">>> Тесты api-service..."
@@ -104,6 +115,10 @@ test-user: ## Запустить тесты user-service
 test-catalog: ## Запустить тесты catalog-service
 	@echo ">>> Тесты catalog-service..."
 	cd services/catalog-service && go test ./... -v
+
+test-inventory: ## Запустить тесты inventory-service
+	@echo ">>> Тесты inventory-service..."
+	cd services/inventory-service && go test ./... -v
 
 # ==============================================================================
 # Протоколы (Protobuf)
@@ -124,6 +139,12 @@ proto-user: ## Сгенерировать Protobuf для user-service
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		user_service.proto
 
+proto-inventory: ## Сгенерировать Protobuf для inventory-service
+	@echo ">>> Генерация inventory Protobuf..."
+	cd proto/inventory && protoc --go_out=. --go_opt=paths=source_relative \
+		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+		inventory_service.proto
+
 # ==============================================================================
 # Миграции базы данных
 # ==============================================================================
@@ -143,6 +164,14 @@ migrate-catalog-down: ## Откатить миграции catalog-db
 	@echo ">>> Миграции catalog-db (down)..."
 	cd services/catalog-service && go run ./cmd/main.go migrate down
 
+migrate-inventory-up: ## Применить миграции inventory-db
+	@echo ">>> Миграции inventory-db (up)..."
+	cd services/inventory-service && go run ./cmd/main.go migrate up
+
+migrate-inventory-down: ## Откатить миграции inventory-db
+	@echo ">>> Миграции inventory-db (down)..."
+	cd services/inventory-service && go run ./cmd/main.go migrate down
+
 # ==============================================================================
 # Утилиты
 # ==============================================================================
@@ -154,10 +183,10 @@ clean: ## Очистить bin и временные файлы
 
 tidy: ## Обновить зависимости go.mod
 	@echo ">>> Обновление зависимостей..."
-	go mod tidy
 	cd services/api-service && go mod tidy
 	cd services/user-service && go mod tidy
 	cd services/catalog-service && go mod tidy
+	cd services/inventory-service && go mod tidy
 	cd proto && go mod tidy
 
 lint: ## Запустить линтер
@@ -166,26 +195,27 @@ lint: ## Запустить линтер
 
 fmt: ## Форматировать код
 	@echo ">>> Форматирование..."
-	go fmt ./...
 	cd services/api-service && go fmt ./...
 	cd services/user-service && go fmt ./...
 	cd services/catalog-service && go fmt ./...
+	cd services/inventory-service && go fmt ./...
 
 vet: ## Запустить go vet
 	@echo ">>> go vet..."
-	go vet ./...
 	cd services/api-service && go vet ./...
 	cd services/user-service && go vet ./...
 	cd services/catalog-service && go vet ./...
+	cd services/inventory-service && go vet ./...
 
 # ==============================================================================
 # Разработка
 # ==============================================================================
 dev: docker-up ## Запустить среду разработки (Docker)
 	@echo ">>> Среда разработки запущена"
-	@echo "API Service: http://localhost:8080"
-	@echo "Catalog:     http://localhost:8082 (gRPC)"
-	@echo "User:        http://localhost:8081 (gRPC)"
+	@echo "API Service:       http://localhost:8080"
+	@echo "User Service:      http://localhost:8081 (gRPC)"
+	@echo "Catalog Service:   http://localhost:8082 (gRPC)"
+	@echo "Inventory Service: http://localhost:8083 (gRPC)"
 
 dev-stop: docker-down ## Остановить среду разработки
 	@echo ">>> Среда разработки остановлена"
@@ -214,3 +244,10 @@ db-user-shell: ## Открыть shell в user-db контейнере
 
 db-catalog-shell: ## Открыть shell в catalog-db контейнере
 	docker exec -it catalog-db bash
+
+db-inventory-connect: ## Подключиться к inventory-db
+	@echo ">>> Подключение к inventory-db..."
+	docker exec -it inventory-db psql -U kinos -d inventory_db
+
+db-inventory-shell: ## Открыть shell в inventory-db контейнере
+	docker exec -it inventory-db bash
