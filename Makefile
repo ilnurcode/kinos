@@ -120,47 +120,6 @@ run-inventory: ## Запустить inventory-service
 	cd services/inventory-service && go run ./cmd/main.go
 
 # ==============================================================================
-# Docker Compose
-# ==============================================================================
-docker-up: ## Запустить все контейнеры (фон)
-	@echo ">>> Запуск Docker контейнеров..."
-	docker-compose up -d
-
-docker-up-build: ## Запустить все контейнеры с пересборкой (фон)
-	@echo ">>> Запуск Docker контейнеров с пересборкой..."
-	docker-compose up -d --build
-
-docker-down: ## Остановить все контейнеры
-	@echo ">>> Остановка Docker контейнеров..."
-	docker-compose down
-
-docker-restart: ## Перезапустить все контейнеры
-	@echo ">>> Перезапуск Docker контейнеров..."
-	docker-compose restart
-
-docker-logs: ## Показать логи всех контейнеров
-	docker-compose logs -f
-
-docker-logs-api: ## Показать логи api-service
-	docker-compose logs -f api-service
-
-docker-logs-user: ## Показать логи user-service
-	docker-compose logs -f user-service
-
-docker-logs-catalog: ## Показать логи catalog-service
-	docker-compose logs -f catalog-service
-
-docker-logs-inventory: ## Показать логи inventory-service
-	docker-compose logs -f inventory-service
-
-docker-ps: ## Показать статус контейнеров
-	docker-compose ps
-
-docker-clean: ## Очистить Docker кэш
-	@echo ">>> Очистка Docker кэша..."
-	docker system prune -f
-
-# ==============================================================================
 # Тестирование
 # ==============================================================================
 test: test-api test-user test-catalog test-inventory ## Запустить тесты всех сервисов
@@ -318,25 +277,11 @@ db-inventory-connect: ## Подключиться к inventory-db
 	@echo ">>> Подключение к inventory-db..."
 	docker exec -it inventory-db psql -U kinos -d inventory_db
 
-db-warehouse-connect: ## Подключиться к warehouse-db
-	@echo ">>> Подключение к warehouse-db..."
-	docker exec -it warehouse-db psql -U kinos -d warehouse_db
-
 db-user-shell: ## Открыть shell в user-db контейнере
 	docker exec -it user-db bash
 
 db-catalog-shell: ## Открыть shell в catalog-db контейнере
 	docker exec -it catalog-db bash
-
-db-inventory-shell: ## Открыть shell в inventory-db контейнере
-	docker exec -it inventory-db bash
-
-db-warehouse-shell: ## Открыть shell в warehouse-db контейнере
-	docker exec -it warehouse-db bash
-
-db-inventory-connect: ## Подключиться к inventory-db
-	@echo ">>> Подключение к inventory-db..."
-	docker exec -it inventory-db psql -U kinos -d inventory_db
 
 db-inventory-shell: ## Открыть shell в inventory-db контейнере
 	docker exec -it inventory-db bash

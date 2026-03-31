@@ -27,20 +27,3 @@ export function formatError(error, defaultMessage = 'Произошла ошиб
 
   return errorMessages[status] || data?.error || error.message || defaultMessage
 }
-
-/**
- * Определяет тип ошибки для стилизации
- * @param {Error} error - Объект ошибки
- * @returns {'error' | 'warning' | 'info'} Тип ошибки
- */
-export function getErrorType(error) {
-  if (!error.response) return 'error'
-
-  const status = error.response.status
-
-  if (status >= 500) return 'error'
-  if (status === 401 || status === 403) return 'warning'
-  if (status === 400 || status === 404) return 'info'
-
-  return 'error'
-}

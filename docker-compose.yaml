@@ -71,7 +71,7 @@ services:
     volumes:
       - user_db_data:/var/lib/postgresql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U kinos -d user_db" ]
+      test: ["CMD-SHELL", "pg_isready -U kinos -d user_db"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -85,7 +85,7 @@ services:
     volumes:
       - catalog_db_data:/var/lib/postgresql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U kinos -d catalog_db" ]
+      test: ["CMD-SHELL", "pg_isready -U kinos -d catalog_db"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -100,7 +100,7 @@ services:
     volumes:
       - inventory_db_data:/var/lib/postgresql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U kinos -d inventory_db" ]
+      test: ["CMD-SHELL", "pg_isready -U kinos -d inventory_db"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -109,4 +109,3 @@ volumes:
   user_db_data:
   catalog_db_data:
   inventory_db_data:
-  warehouse_db_data:
