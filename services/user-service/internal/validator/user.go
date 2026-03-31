@@ -3,7 +3,7 @@
 package validator
 
 import (
-	"fmt"
+	"kinos/user-service/internal/errs"
 	"regexp"
 	"strings"
 
@@ -38,7 +38,7 @@ type Validator struct{}
 func (v *Validator) ValidateRegister(input RegisterInput) error {
 	// Проверяем обязательные поля
 	if err := validate.Struct(input); err != nil {
-		return err
+		return errs.WrapValidationError(err)
 	}
 
 	// Кастомная валидация телефона
@@ -51,7 +51,7 @@ func (v *Validator) ValidateRegister(input RegisterInput) error {
 
 func (v *Validator) validatePhone(phone string) error {
 	if phone == "" {
-		return fmt.Errorf("телефон обязателен")
+		return errs.ErrPhoneRequired
 	}
 
 	// Удаляем пробелы, дефисы и скобки
@@ -63,12 +63,15 @@ func (v *Validator) validatePhone(phone string) error {
 
 	// Проверяем формат E.164
 	if !phoneRegex.MatchString(phone) {
-		return fmt.Errorf("неверный формат телефона. Пример: +79991234567")
+		return errs.ErrPhoneInvalid
 	}
 
 	return nil
 }
 
 func (v *Validator) ValidateLogin(input LoginInput) error {
-	return validate.Struct(input)
+	if err := validate.Struct(input); err != nil {
+		return errs.WrapValidationError(err)
+	}
+	return nil
 }

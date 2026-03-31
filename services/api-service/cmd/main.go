@@ -3,9 +3,6 @@
 package main
 
 import (
-	"context"
-	"html/template"
-	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -13,39 +10,25 @@ import (
 	"syscall"
 	"time"
 
-	assets "kinos/api-service"
 	"kinos/api-service/internal/api/catalog"
 	"kinos/api-service/internal/api/inventory"
 	"kinos/api-service/internal/api/users"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	router := gin.Default()
 
-	// Явно указываем все шаблоны для правильного сохранения имён
-	tmpl := template.Must(template.ParseFS(assets.FS,
-		"templates/index.html",
-		"templates/login.html",
-		"templates/registration.html",
-		"templates/profile.html",
-		"templates/edit_profile.html",
-		"templates/catalog.html",
-		"templates/admin/users.html",
-		"templates/admin/categories.html",
-		"templates/admin/manufacturers.html",
-		"templates/admin/products.html",
-		"templates/admin/inventory.html",
-		"templates/admin/warehouses.html",
-	))
-	router.SetHTMLTemplate(tmpl)
-
-	staticFS, err := fs.Sub(assets.FS, "static")
-	if err != nil {
-		log.Fatal(err)
-	}
-	router.StaticFS("/static", http.FS(staticFS))
+	// Настройка CORS для frontend
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://localhost"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	userClient := users.NewUserClient("user-service:8081")
 	catalogClient := catalog.NewCatalogClient("catalog-service:8082")
@@ -72,6 +55,7 @@ func main() {
 			// Склады
 			apiInventory.GET("/warehouses/list", inventoryHandler.GetListWarehouse)
 			apiInventory.POST("/warehouses", inventoryHandler.CreateWarehouse)
+			apiInventory.PUT("/warehouses/:id", inventoryHandler.UpdateWarehouse)
 			apiInventory.DELETE("/warehouses/:id", inventoryHandler.DeleteWarehouse)
 		}
 
@@ -126,41 +110,6 @@ func main() {
 
 	}
 
-	router.GET("/", func(c *gin.Context) { c.HTML(http.StatusOK, "index.html", gin.H{"title": "Welcome to Kinos!"}) })
-	router.GET("/catalog", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "catalog.html", gin.H{"title": "Каталог товаров"})
-	})
-	router.GET("/register", func(c *gin.Context) { c.HTML(http.StatusOK, "registration.html", gin.H{"title": "Registration"}) })
-	router.GET("/login", func(c *gin.Context) { c.HTML(http.StatusOK, "login.html", gin.H{"title": "Login"}) })
-
-	// HTML страницы админ-панели — без middleware, проверка через JS
-	router.GET("/admin/users", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "users.html", gin.H{"title": "Управление пользователями"})
-	})
-	router.GET("/admin/categories", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "categories.html", gin.H{"title": "Управление категориями"})
-	})
-	router.GET("/admin/manufacturers", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "manufacturers.html", gin.H{"title": "Управление производителями"})
-	})
-	router.GET("/admin/products", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "products.html", gin.H{"title": "Управление товарами"})
-	})
-	router.GET("/admin/inventory", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "inventory.html", gin.H{"title": "Управление запасами"})
-	})
-	router.GET("/admin/warehouses", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "warehouses.html", gin.H{"title": "Управление складами"})
-	})
-
-	// HTML страницы профиля — без middleware, аутентификация через JS
-	router.GET("/profile", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "profile.html", gin.H{"title": "Профиль"})
-	})
-	router.GET("/profile/edit", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "edit_profile.html", gin.H{"title": "Редактирование профиля"})
-	})
-
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "timestamp": time.Now()})
@@ -181,9 +130,7 @@ func main() {
 	}()
 	<-quit
 	log.Println("Shutdown Server ...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Close(); err != nil {
 		log.Fatal("Server forced to shutdown:", err)
 	}
 	log.Println("Server exiting")

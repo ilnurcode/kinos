@@ -344,6 +344,57 @@ func (h *Handler) CreateWarehouse(c *gin.Context) {
 	c.JSON(http.StatusOK, warehouse)
 }
 
+// UpdateWarehouse godoc
+// @Summary Обновить склад
+// @Description Обновить данные склада
+// @Tags inventory
+// @Accept json
+// @Produce json
+// @Param id path uint64 true "ID склада"
+// @Param name body string true "Название"
+// @Param city body string true "Город"
+// @Param street body string true "Улица"
+// @Param building body string false "Дом"
+// @Param building2 body string false "Строение"
+// @Success 200 {object} object
+// @Failure 400 {object} object
+// @Failure 404 {object} object
+// @Router /api/inventory/warehouses/:id [put]
+func (h *Handler) UpdateWarehouse(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	var body struct {
+		Name      string `json:"name"`
+		City      string `json:"city"`
+		Street    string `json:"street"`
+		Building  string `json:"building"`
+		Building2 string `json:"building2"`
+	}
+
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	if body.Name == "" || body.City == "" || body.Street == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "name, city и street обязательны"})
+		return
+	}
+
+	warehouse, err := h.InventoryClient.UpdateWarehouse(c.Request.Context(), id, body.Name, body.City, body.Street, body.Building, body.Building2)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update warehouse"})
+		return
+	}
+
+	c.JSON(http.StatusOK, warehouse)
+}
+
 // DeleteWarehouse godoc
 // @Summary Удалить склад
 // @Description Удалить склад по ID

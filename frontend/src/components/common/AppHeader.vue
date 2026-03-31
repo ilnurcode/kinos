@@ -1,0 +1,108 @@
+<template>
+  <header class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <router-link class="navbar-brand fw-bold" to="/">Kinos</router-link>
+
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <router-link class="nav-link" to="/catalog">Каталог</router-link>
+          </li>
+          <li class="nav-item" v-if="isAdmin">
+            <router-link class="nav-link text-warning" to="/admin/dashboard">Админка</router-link>
+          </li>
+        </ul>
+
+        <ul class="navbar-nav">
+          <template v-if="!isAuthenticated">
+            <li class="nav-item">
+              <router-link class="nav-link" to="/login">Вход</router-link>
+            </li>
+            <li class="nav-item">
+              <router-link class="nav-link" to="/register">Регистрация</router-link>
+            </li>
+          </template>
+
+          <template v-else>
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle d-flex align-items-center gap-1"
+                href="javascript:void(0)"
+                id="navbarDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <span>{{ user?.username || 'Профиль' }}</span>
+                <span v-if="isAdmin" class="badge bg-warning text-dark">Admin</span>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                <li><router-link class="dropdown-item" to="/profile" @click="closeDropdown">Профиль</router-link></li>
+                <li><router-link class="dropdown-item" to="/profile/edit" @click="closeDropdown">Настройки</router-link></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="javascript:void(0)" @click.prevent="handleLogout">Выйти</a></li>
+              </ul>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </div>
+  </header>
+</template>
+
+<script setup>
+import { useAuthStore } from '@/stores/auth'
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+const isAdmin = computed(() => authStore.isAdmin)
+const user = computed(() => authStore.user)
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/')
+}
+
+// Закрываем dropdown при клике на router-link
+const closeDropdown = () => {
+  const dropdownElement = document.querySelector('.dropdown-toggle[aria-expanded="true"]')
+  if (dropdownElement) {
+    dropdownElement.click()
+  }
+}
+</script>
+
+<style scoped>
+.navbar-brand {
+  font-size: 1.5rem;
+}
+
+.nav-link.dropdown-toggle {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.nav-link.dropdown-toggle::after {
+  margin-left: 0.25rem;
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+  vertical-align: middle;
+}
+</style>

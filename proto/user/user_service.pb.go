@@ -859,6 +859,7 @@ type UserProfileResponse struct {
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	Phone         string                 `protobuf:"bytes,4,opt,name=phone,proto3" json:"phone,omitempty"`
+	Role          string                 `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -921,6 +922,13 @@ func (x *UserProfileResponse) GetPhone() string {
 	return ""
 }
 
+func (x *UserProfileResponse) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
 var File_user_service_proto protoreflect.FileDescriptor
 
 const file_user_service_proto_rawDesc = "" +
@@ -973,12 +981,13 @@ const file_user_service_proto_rawDesc = "" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12,\n" +
 	"\x12refresh_expires_at\x18\x03 \x01(\x03R\x10refreshExpiresAt\"\x13\n" +
-	"\x11GetProfileRequest\"v\n" +
+	"\x11GetProfileRequest\"\x8a\x01\n" +
 	"\x13UserProfileResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x14\n" +
-	"\x05phone\x18\x04 \x01(\tR\x05phone2\xb4\x04\n" +
+	"\x05phone\x18\x04 \x01(\tR\x05phone\x12\x12\n" +
+	"\x04role\x18\x05 \x01(\tR\x04role2\xb4\x04\n" +
 	"\vUserService\x125\n" +
 	"\bRegister\x12\x15.user.RegisterRequest\x1a\x12.user.AuthResponse\x12/\n" +
 	"\x05Login\x12\x12.user.LoginRequest\x1a\x12.user.AuthResponse\x123\n" +

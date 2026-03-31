@@ -22,6 +22,7 @@ type InventoryClientInterface interface {
 	// Warehouse methods
 	GetListWarehouse(ctx context.Context, limit, offset int32) (*pb.ListWarehouseResponse, error)
 	CreateWarehouse(ctx context.Context, name, city, street, building, building2 string) (*pb.Warehouse, error)
+	UpdateWarehouse(ctx context.Context, id uint64, name, city, street, building, building2 string) (*pb.Warehouse, error)
 	DeleteWarehouse(ctx context.Context, id uint64) error
 }
 
@@ -105,6 +106,17 @@ func (c *InventoryClient) GetListWarehouse(ctx context.Context, limit, offset in
 
 func (c *InventoryClient) CreateWarehouse(ctx context.Context, name, city, street, building, building2 string) (*pb.Warehouse, error) {
 	return c.client.CreateWarehouse(ctx, &pb.CreateWarehouseRequest{
+		Name:      name,
+		City:      city,
+		Street:    street,
+		Building:  building,
+		Building2: building2,
+	})
+}
+
+func (c *InventoryClient) UpdateWarehouse(ctx context.Context, id uint64, name, city, street, building, building2 string) (*pb.Warehouse, error) {
+	return c.client.UpdateWarehouse(ctx, &pb.UpdateWarehouseRequest{
+		Id:        id,
 		Name:      name,
 		City:      city,
 		Street:    street,

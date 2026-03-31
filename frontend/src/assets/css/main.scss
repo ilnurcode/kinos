@@ -1,0 +1,20 @@
+// Bootstrap
+@import "bootstrap/scss/bootstrap";
+
+// Custom styles
+body {
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+}
+
+// Utility classes
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.text-small {
+  font-size: 0.875rem;
+}

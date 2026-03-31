@@ -28,6 +28,7 @@ const (
 	InventoryService_ReserveStock_FullMethodName       = "/inventory.InventoryService/ReserveStock"
 	InventoryService_ReleaseReservation_FullMethodName = "/inventory.InventoryService/ReleaseReservation"
 	InventoryService_CreateWarehouse_FullMethodName    = "/inventory.InventoryService/CreateWarehouse"
+	InventoryService_UpdateWarehouse_FullMethodName    = "/inventory.InventoryService/UpdateWarehouse"
 	InventoryService_GetListWarehouse_FullMethodName   = "/inventory.InventoryService/GetListWarehouse"
 	InventoryService_DeleteWarehouse_FullMethodName    = "/inventory.InventoryService/DeleteWarehouse"
 )
@@ -47,6 +48,7 @@ type InventoryServiceClient interface {
 	ReleaseReservation(ctx context.Context, in *ReleaseReservationRequest, opts ...grpc.CallOption) (*ReleaseReservationResponse, error)
 	// Управление складами
 	CreateWarehouse(ctx context.Context, in *CreateWarehouseRequest, opts ...grpc.CallOption) (*Warehouse, error)
+	UpdateWarehouse(ctx context.Context, in *UpdateWarehouseRequest, opts ...grpc.CallOption) (*Warehouse, error)
 	GetListWarehouse(ctx context.Context, in *GetListWarehouseRequest, opts ...grpc.CallOption) (*ListWarehouseResponse, error)
 	DeleteWarehouse(ctx context.Context, in *DeleteWarehouseRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -139,6 +141,16 @@ func (c *inventoryServiceClient) CreateWarehouse(ctx context.Context, in *Create
 	return out, nil
 }
 
+func (c *inventoryServiceClient) UpdateWarehouse(ctx context.Context, in *UpdateWarehouseRequest, opts ...grpc.CallOption) (*Warehouse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Warehouse)
+	err := c.cc.Invoke(ctx, InventoryService_UpdateWarehouse_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *inventoryServiceClient) GetListWarehouse(ctx context.Context, in *GetListWarehouseRequest, opts ...grpc.CallOption) (*ListWarehouseResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListWarehouseResponse)
@@ -174,6 +186,7 @@ type InventoryServiceServer interface {
 	ReleaseReservation(context.Context, *ReleaseReservationRequest) (*ReleaseReservationResponse, error)
 	// Управление складами
 	CreateWarehouse(context.Context, *CreateWarehouseRequest) (*Warehouse, error)
+	UpdateWarehouse(context.Context, *UpdateWarehouseRequest) (*Warehouse, error)
 	GetListWarehouse(context.Context, *GetListWarehouseRequest) (*ListWarehouseResponse, error)
 	DeleteWarehouse(context.Context, *DeleteWarehouseRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedInventoryServiceServer()
@@ -209,6 +222,9 @@ func (UnimplementedInventoryServiceServer) ReleaseReservation(context.Context, *
 }
 func (UnimplementedInventoryServiceServer) CreateWarehouse(context.Context, *CreateWarehouseRequest) (*Warehouse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateWarehouse not implemented")
+}
+func (UnimplementedInventoryServiceServer) UpdateWarehouse(context.Context, *UpdateWarehouseRequest) (*Warehouse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateWarehouse not implemented")
 }
 func (UnimplementedInventoryServiceServer) GetListWarehouse(context.Context, *GetListWarehouseRequest) (*ListWarehouseResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetListWarehouse not implemented")
@@ -381,6 +397,24 @@ func _InventoryService_CreateWarehouse_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InventoryService_UpdateWarehouse_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateWarehouseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InventoryServiceServer).UpdateWarehouse(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InventoryService_UpdateWarehouse_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InventoryServiceServer).UpdateWarehouse(ctx, req.(*UpdateWarehouseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _InventoryService_GetListWarehouse_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetListWarehouseRequest)
 	if err := dec(in); err != nil {
@@ -455,6 +489,10 @@ var InventoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateWarehouse",
 			Handler:    _InventoryService_CreateWarehouse_Handler,
+		},
+		{
+			MethodName: "UpdateWarehouse",
+			Handler:    _InventoryService_UpdateWarehouse_Handler,
 		},
 		{
 			MethodName: "GetListWarehouse",

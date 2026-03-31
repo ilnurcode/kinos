@@ -14,8 +14,6 @@ FROM debian:bookworm-slim
 WORKDIR /app
 
 COPY --from=builder /app/services/api-service/api_service .
-COPY --from=builder /app/services/api-service/templates ./templates
-COPY --from=builder /app/services/api-service/static ./static
 
 EXPOSE 8080
 

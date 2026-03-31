@@ -45,14 +45,17 @@ func (h *Handler) Register(c *gin.Context) {
 	resp, err := h.UserClient.Register(c.Request.Context(), body.Username, body.Email, body.Password, body.Phone)
 	if err != nil {
 		errMsg := err.Error()
-		if strings.Contains(errMsg, "already exists") {
+		switch {
+		case strings.Contains(errMsg, "уже существует"):
 			c.JSON(http.StatusConflict, gin.H{"error": "Пользователь с таким email уже существует"})
-		} else if strings.Contains(errMsg, "телефон") {
-			// Возвращаем ошибку валидации телефона
+		case strings.Contains(errMsg, "ошибка валидации"):
+			// Извлекаем сообщение об ошибке валидации
 			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
-		} else if strings.Contains(errMsg, "Validation") {
+		case strings.Contains(errMsg, "телефон"):
 			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
-		} else {
+		case strings.Contains(errMsg, "email"):
+			c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при регистрации"})
 		}
 		return
@@ -94,12 +97,12 @@ func (h *Handler) Revoke(c *gin.Context) {
 func (h *Handler) Refresh(c *gin.Context) {
 	refreshToken, err := c.Cookie("refresh_token")
 	if err != nil || refreshToken == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "no refresh token"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Требуется аутентификация"})
 		return
 	}
 	resp, err := h.UserClient.Refresh(c.Request.Context(), refreshToken)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid refresh token"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный или истекший токен обновления"})
 		return
 	}
 	http.SetCookie(c.Writer, &http.Cookie{Name: "refresh_token", Value: resp.RefreshToken, Path: "/", HttpOnly: true, Secure: true, SameSite: http.SameSiteStrictMode, MaxAge: maxAgeFromUnix(resp.RefreshExpiresAt)})
@@ -114,14 +117,21 @@ func (h *Handler) GetProfile(c *gin.Context) {
 	}
 	parts := strings.Split(authHeader, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат токена"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат токена. Используйте: Bearer <token>"})
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	resp, err := h.UserClient.GetProfile(ctx, parts[1])
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Пользователь не найден"})
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "требуется аутентификация") {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Требуется аутентификация"})
+		} else if strings.Contains(errMsg, "пользователь не найден") {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Пользователь не найден"})
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Ошибка при получении профиля"})
+		}
 		return
 	}
 	c.JSON(http.StatusOK, resp)
@@ -135,7 +145,7 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 	}
 	parts := strings.Split(authHeader, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат токена"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат токена. Используйте: Bearer <token>"})
 		return
 	}
 	token := parts[1]
@@ -153,9 +163,12 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 	updatedProfile, err := h.UserClient.UpdateProfile(ctx, token, req.Username, req.Email, req.Phone)
 	if err != nil {
 		errMsg := err.Error()
-		if strings.Contains(errMsg, "already exists") {
+		switch {
+		case strings.Contains(errMsg, "уже используется"):
 			c.JSON(http.StatusConflict, gin.H{"error": "Email уже используется"})
-		} else {
+		case strings.Contains(errMsg, "пользователь не найден"):
+			c.JSON(http.StatusNotFound, gin.H{"error": "Пользователь не найден"})
+		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка обновления профиля"})
 		}
 		return
@@ -171,7 +184,7 @@ func (h *Handler) UpdateRole(c *gin.Context) {
 	}
 	parts := strings.Split(authHeader, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат токена"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат токена. Используйте: Bearer <token>"})
 		return
 	}
 	token := parts[1]
@@ -187,7 +200,19 @@ func (h *Handler) UpdateRole(c *gin.Context) {
 	defer cancel()
 	resp, err := h.UserClient.UpdateRole(ctx, token, req.Role, req.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка обновления роли"})
+		errMsg := err.Error()
+		switch {
+		case strings.Contains(errMsg, "доступ запрещен"):
+			c.JSON(http.StatusForbidden, gin.H{"error": "Доступ запрещен: требуется роль администратора"})
+		case strings.Contains(errMsg, "нельзя изменить собственную роль"):
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Нельзя изменить собственную роль"})
+		case strings.Contains(errMsg, "пользователь не найден"):
+			c.JSON(http.StatusNotFound, gin.H{"error": "Пользователь не найден"})
+		case strings.Contains(errMsg, "недопустимая роль"):
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Недопустимая роль. Разрешены только 'admin' или 'user'"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка обновления роли"})
+		}
 		return
 	}
 	c.JSON(http.StatusOK, resp)
@@ -201,7 +226,7 @@ func (h *Handler) GetUsers(c *gin.Context) {
 	}
 	parts := strings.Split(authHeader, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат токена"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат токена. Используйте: Bearer <token>"})
 		return
 	}
 	token := parts[1]

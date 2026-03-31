@@ -11,4 +11,5 @@ type Warehouse struct {
 	Building  string    `json:"building"`
 	Building2 string    `json:"building2"`
 	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

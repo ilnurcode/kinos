@@ -41,12 +41,13 @@
 ### Требования
 
 - Docker и Docker Compose
-- Go 1.25+ (для локальной разработки)
+- Go 1.25+ (для локальной разработки бэкенда)
+- Node.js 18+ и npm 9+ (для frontend)
 
 ### Запуск через Docker
 
 ```bash
-# Запустить все сервисы
+# Запустить все сервисы (включая frontend)
 docker-compose up -d
 
 # Проверить статус
@@ -54,12 +55,15 @@ docker-compose ps
 ```
 
 Сервисы будут доступны по адресам:
-- API Service: http://localhost:8080
-- User Service (gRPC): localhost:8081
-- Catalog Service (gRPC): localhost:8082
-- Inventory Service (gRPC): localhost:8083
+- **Frontend:** http://localhost:80
+- **API Service:** http://localhost:8080
+- **User Service (gRPC):** localhost:8081
+- **Catalog Service (gRPC):** localhost:8082
+- **Inventory Service (gRPC):** localhost:8083
 
 ### Локальная разработка
+
+#### Backend
 
 ```bash
 # Установить зависимости
@@ -68,6 +72,21 @@ go mod tidy
 # Запустить api-service
 cd services/api-service && go run ./cmd/main.go
 ```
+
+#### Frontend (Vue.js)
+
+```bash
+# Перейти в папку frontend
+cd frontend
+
+# Установить зависимости
+npm install
+
+# Запустить в режиме разработки
+npm run dev
+```
+
+Frontend будет доступен по адресу: http://localhost:3000
 
 ## 📋 API Endpoints
 

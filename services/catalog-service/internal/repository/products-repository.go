@@ -12,6 +12,7 @@ import (
 )
 
 type ProductsRepositoryInterface interface {
+	GetProductByID(ctx context.Context, id uint64) (*models.Product, error)
 	GetProductByName(ctx context.Context, name string) (*models.Product, error)
 	GetListProduct(ctx context.Context, filter models.ProductFilter, limit, offset int32) ([]*models.Product, int32, error)
 	UpdateProduct(ctx context.Context, product *models.Product) error
@@ -27,6 +28,16 @@ func NewProductsRepository(db *pgxpool.Pool) *ProductsRepository {
 	return &ProductsRepository{
 		DB: db,
 	}
+}
+
+func (r *ProductsRepository) GetProductByID(ctx context.Context, id uint64) (*models.Product, error) {
+	var product models.Product
+	querier := GetQuerier(ctx, r.DB)
+	err := querier.QueryRow(ctx, "SELECT * FROM products WHERE product_id=$1", id).Scan(&product.Id, &product.Name, &product.ManufacturersId, &product.CategoryId, &product.Price)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get product by ID: %w", err)
+	}
+	return &product, nil
 }
 
 func (r *ProductsRepository) GetProductByName(ctx context.Context, name string) (*models.Product, error) {

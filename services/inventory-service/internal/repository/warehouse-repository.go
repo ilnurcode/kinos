@@ -11,6 +11,7 @@ import (
 
 type WarehouseInterface interface {
 	Create(ctx context.Context, name, city, street, building, building2 string) (*model.Warehouse, error)
+	Update(ctx context.Context, id uint64, name, city, street, building, building2 string) (*model.Warehouse, error)
 	GetList(ctx context.Context, limit, offset int32) ([]*model.Warehouse, int32, error)
 	Delete(ctx context.Context, id uint64) error
 }
@@ -40,6 +41,29 @@ func (r *WarehouseRepository) Create(ctx context.Context, name, city, street, bu
 		&w.Building,
 		&w.Building2,
 		&w.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &w, nil
+}
+
+func (r *WarehouseRepository) Update(ctx context.Context, id uint64, name, city, street, building, building2 string) (*model.Warehouse, error) {
+	query := `
+		UPDATE warehouses
+		SET name = $2, city = $3, street = $4, building = $5, building2 = $6, updated_at = NOW()
+		WHERE id = $1
+		RETURNING id, name, city, street, building, building2, updated_at
+	`
+	var w model.Warehouse
+	err := r.pool.QueryRow(ctx, query, id, name, city, street, building, building2).Scan(
+		&w.Id,
+		&w.Name,
+		&w.City,
+		&w.Street,
+		&w.Building,
+		&w.Building2,
+		&w.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err

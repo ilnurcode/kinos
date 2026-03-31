@@ -1,4 +1,15 @@
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: kinos-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api-service
+    restart: unless-stopped
+
   user-service:
     build:
       context: .

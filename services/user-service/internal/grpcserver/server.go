@@ -5,7 +5,6 @@ package grpcserver
 import (
 	"context"
 	"log"
-	"strings"
 
 	pb "kinos/proto/user"
 	"kinos/user-service/internal/grpcmiddleware"
@@ -70,17 +69,16 @@ func (s *UserServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb
 	err := s.validator.ValidateRegister(input)
 	if err != nil {
 		log.Printf("Validation error: %v", err)
-		// Возвращаем понятное сообщение об ошибке
-		errMsg := err.Error()
-		if strings.Contains(errMsg, "телефон") {
-			return nil, status.Errorf(codes.InvalidArgument, "%s", errMsg)
-		}
-		return nil, status.Errorf(codes.InvalidArgument, "Ошибка валидации: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "ошибка валидации: %v", err)
 	}
 	access, refresh, exp, err := s.authSvc.Register(ctx, req.Username, req.Email, req.Password, req.Phone)
 	if err != nil {
 		log.Printf("Register service error: %v", err)
-		return nil, status.Errorf(codes.Internal, "Register service error: %v", err)
+		// Если это уже gRPC статус с понятным сообщением, возвращаем его
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+		return nil, status.Errorf(codes.Internal, "ошибка при регистрации: %v", err)
 	}
 	log.Printf("User registered successfully: email=%s, user_id=%v", req.Email, access)
 	return &pb.AuthResponse{
@@ -105,12 +103,16 @@ func (s *UserServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.AuthR
 	err := s.validator.ValidateLogin(input)
 	if err != nil {
 		log.Printf("Validation error: %v", err)
-		return nil, status.Errorf(codes.InvalidArgument, "Validation failed: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "ошибка валидации: %v", err)
 	}
 	access, refresh, exp, err := s.authSvc.Login(ctx, req.Email, req.Password)
 	if err != nil {
 		log.Printf("Login service error: %v", err)
-		return nil, status.Errorf(codes.Internal, "Login service error: %v", err)
+		// Если это уже gRPC статус с понятным сообщением, возвращаем его
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+		return nil, status.Errorf(codes.Internal, "ошибка при входе: %v", err)
 	}
 	log.Printf("User logged in successfully: email=%s", req.Email)
 	return &pb.AuthResponse{
@@ -123,7 +125,11 @@ func (s *UserServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.AuthR
 func (s *UserServer) Refresh(ctx context.Context, req *pb.RefreshRequest) (*pb.AuthResponse, error) {
 	access, refresh, exp, err := s.authSvc.Refresh(ctx, req.RefreshToken)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Refresh service error: %v", err)
+		log.Printf("Refresh service error: %v", err)
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+		return nil, status.Errorf(codes.Internal, "ошибка обновления токена: %v", err)
 	}
 	return &pb.AuthResponse{
 		AccessToken:      access,
@@ -134,7 +140,11 @@ func (s *UserServer) Refresh(ctx context.Context, req *pb.RefreshRequest) (*pb.A
 
 func (s *UserServer) Revoke(ctx context.Context, req *pb.RevokeRequest) (*pb.RevokeResponse, error) {
 	if err := s.authSvc.RevokeRefresh(ctx, req.RefreshToken); err != nil {
-		return nil, status.Errorf(codes.Internal, "Revoke service error: %v", err)
+		log.Printf("Revoke service error: %v", err)
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+		return nil, status.Errorf(codes.Internal, "ошибка отзыва токена: %v", err)
 	}
 	return &pb.RevokeResponse{Success: true}, nil
 }
@@ -142,39 +152,40 @@ func (s *UserServer) Revoke(ctx context.Context, req *pb.RevokeRequest) (*pb.Rev
 func (s *UserServer) GetProfile(ctx context.Context, _ *pb.GetProfileRequest) (*pb.UserProfileResponse, error) {
 	userIDRaw := ctx.Value(grpcmiddleware.UserIDKey)
 	if userIDRaw == nil {
-		return nil, status.Error(codes.Unauthenticated, "no user")
+		return nil, status.Error(codes.Unauthenticated, "требуется аутентификация")
 	}
 	userID := userIDRaw.(uint64)
 	user, err := s.userSvc.FindUserByID(ctx, userID)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, "user not found")
+		return nil, status.Error(codes.NotFound, "пользователь не найден")
 	}
 	return &pb.UserProfileResponse{
 		UserId:   user.Id,
 		Username: user.Username,
 		Email:    user.Email,
 		Phone:    user.Phone,
+		Role:     user.Role,
 	}, nil
 }
 
 func (s *UserServer) UpdateRole(ctx context.Context, req *pb.UpdateRoleRequest) (*pb.UpdateRoleResponse, error) {
 	userIDRaw := ctx.Value(grpcmiddleware.UserIDKey)
 	if userIDRaw == nil {
-		return nil, status.Error(codes.Unauthenticated, "no user")
+		return nil, status.Error(codes.Unauthenticated, "требуется аутентификация")
 	}
 	currentUserID := userIDRaw.(uint64)
 
 	roleVal := ctx.Value(grpcmiddleware.RoleKey)
 	if roleVal == nil {
-		return nil, status.Error(codes.Unauthenticated, "no role")
+		return nil, status.Error(codes.Unauthenticated, "требуется аутентификация")
 	}
 	if roleVal.(string) != "admin" {
-		return nil, status.Error(codes.PermissionDenied, "permission denied")
+		return nil, status.Error(codes.PermissionDenied, "доступ запрещен: требуется роль администратора")
 	}
 
 	// Запрет изменения роли самому себе
 	if currentUserID == req.UserId {
-		return nil, status.Error(codes.PermissionDenied, "cannot change own role")
+		return nil, status.Error(codes.PermissionDenied, "нельзя изменить собственную роль")
 	}
 
 	_, err := s.userSvc.FindUserByID(ctx, req.UserId)
@@ -182,11 +193,11 @@ func (s *UserServer) UpdateRole(ctx context.Context, req *pb.UpdateRoleRequest) 
 		return nil, status.Error(codes.NotFound, "пользователь не найден")
 	}
 	if req.Role != "admin" && req.Role != "user" {
-		return nil, status.Error(codes.InvalidArgument, "недопустимая роль")
+		return nil, status.Error(codes.InvalidArgument, "недопустимая роль: разрешены только 'admin' или 'user'")
 	}
 	err = s.userSvc.UpdateRole(ctx, req.UserId, req.Role)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "ошибка обновления роли")
+		return nil, status.Errorf(codes.Internal, "ошибка обновления роли: %v", err)
 	}
 	return &pb.UpdateRoleResponse{Success: true}, nil
 }
@@ -194,16 +205,20 @@ func (s *UserServer) UpdateRole(ctx context.Context, req *pb.UpdateRoleRequest) 
 func (s *UserServer) UpdateProfile(ctx context.Context, req *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {
 	userIDRaw := ctx.Value(grpcmiddleware.UserIDKey)
 	if userIDRaw == nil {
-		return nil, status.Error(codes.Unauthenticated, "no user")
+		return nil, status.Error(codes.Unauthenticated, "требуется аутентификация")
 	}
 	userID := userIDRaw.(uint64)
 	_, err := s.userSvc.FindUserByID(ctx, userID)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "user not found: %v", err)
+		return nil, status.Error(codes.NotFound, "пользователь не найден")
 	}
 	err = s.authSvc.UpdateProfile(ctx, userID, req.Username, req.Email, req.Phone)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "update user failed: %v", err)
+		// Если это уже gRPC статус с понятным сообщением, возвращаем его
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+		return nil, status.Errorf(codes.Internal, "ошибка обновления профиля: %v", err)
 	}
 	return &pb.UpdateProfileResponse{Success: true}, nil
 }

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	usrErrs "kinos/user-service/internal/errs"
 	"kinos/user-service/internal/models"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -83,7 +84,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, username, email, passwo
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return 0, fmt.Errorf("user with email %s already exists", email)
+			return 0, usrErrs.ErrUserExists
 		}
 		return 0, fmt.Errorf("failed to create user: %w", err)
 	}
@@ -112,7 +113,7 @@ func (r *UserRepository) UpdateProfile(ctx context.Context,
 	}
 	_, err = r.FindUserByEmail(ctx, Email)
 	if err == nil && user.Email != Email {
-		return fmt.Errorf("user with email %s already exists", Email)
+		return usrErrs.ErrEmailExists
 	}
 
 	// Если телефон пустой, сохраняем NULL

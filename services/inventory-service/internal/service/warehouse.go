@@ -3,8 +3,7 @@ package service
 
 import (
 	"context"
-	"errors"
-
+	"kinos/inventory-service/internal/errs"
 	"kinos/inventory-service/internal/model"
 	"kinos/inventory-service/internal/repository"
 )
@@ -23,7 +22,7 @@ func NewWarehouseService(warehouseRepo repository.WarehouseInterface, txManager 
 
 func (s *WarehouseService) CreateWarehouse(ctx context.Context, name, city, street, building, building2 string) (*model.Warehouse, error) {
 	if name == "" || city == "" || street == "" {
-		return nil, errors.New("название, город и улица обязательны")
+		return nil, errs.ErrWarehouseRequired
 	}
 
 	var warehouse *model.Warehouse
@@ -31,6 +30,23 @@ func (s *WarehouseService) CreateWarehouse(ctx context.Context, name, city, stre
 		var err error
 		warehouse, err = s.warehouseRepo.Create(txCtx, name, city, street, building, building2)
 		return err
+	})
+	return warehouse, err
+}
+
+func (s *WarehouseService) UpdateWarehouse(ctx context.Context, id uint64, name, city, street, building, building2 string) (*model.Warehouse, error) {
+	if name == "" || city == "" || street == "" {
+		return nil, errs.ErrWarehouseRequired
+	}
+
+	var warehouse *model.Warehouse
+	err := s.txManager.Do(ctx, func(txCtx context.Context) error {
+		var err error
+		warehouse, err = s.warehouseRepo.Update(txCtx, id, name, city, street, building, building2)
+		if err != nil {
+			return err
+		}
+		return nil
 	})
 	return warehouse, err
 }

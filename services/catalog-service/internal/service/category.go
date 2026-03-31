@@ -5,9 +5,17 @@ package service
 import (
 	"context"
 	"fmt"
+
+	"kinos/catalog-service/internal/errs"
 	"kinos/catalog-service/internal/models"
 	"kinos/catalog-service/internal/repository"
 	"kinos/catalog-service/internal/validator"
+)
+
+// Алиасы ошибок из пакета errs
+var (
+	ErrCategoryNotFound = errs.ErrCategoryNotFound
+	ErrCategoryExists   = errs.ErrCategoryExists
 )
 
 type CategoryServiceInterface interface {
@@ -34,13 +42,17 @@ func NewCategoryService(rep repository.CategoryRepositoryInterface, validator va
 
 func (s *CategoryService) CreateCategory(ctx context.Context, name string) (*models.Category, error) {
 	if err := s.validator.ValidateCategory(validator.CategoryInput{Name: name}); err != nil {
-		return nil, fmt.Errorf("validate category error: %v", err)
+		return nil, fmt.Errorf("ошибка валидации категории: %v", err)
 	}
 	var category *models.Category
 	err := s.txManager.Do(ctx, func(txCtx context.Context) error {
+		existing, _ := s.repo.GetCategoryByName(txCtx, name)
+		if existing != nil {
+			return errs.ErrCategoryExists
+		}
 		categoryID, err := s.repo.CreateCategory(txCtx, &models.Category{Name: name})
 		if err != nil {
-			return fmt.Errorf("failed create category: %v", err)
+			return fmt.Errorf("ошибка создания категории: %v", err)
 		}
 		category = &models.Category{Id: categoryID, Name: name}
 		return nil
@@ -50,13 +62,23 @@ func (s *CategoryService) CreateCategory(ctx context.Context, name string) (*mod
 
 func (s *CategoryService) UpdateCategory(ctx context.Context, id uint64, name string) (*models.Category, error) {
 	if err := s.validator.ValidateCategory(validator.CategoryInput{Name: name}); err != nil {
-		return nil, fmt.Errorf("validate category error: %v", err)
+		return nil, fmt.Errorf("ошибка валидации категории: %v", err)
 	}
 	var category *models.Category
 	err := s.txManager.Do(ctx, func(txCtx context.Context) error {
+		// Проверяем существует ли категория с таким именем (кроме текущей)
+		existing, _ := s.repo.GetCategoryByName(txCtx, name)
+		if existing != nil && existing.Id != id {
+			return errs.ErrCategoryExists
+		}
+		// Проверяем существует ли категория с таким id
+		_, err := s.repo.GetCategoryByID(txCtx, id)
+		if err != nil {
+			return errs.ErrCategoryNotFound
+		}
 		category = &models.Category{Id: id, Name: name}
 		if err := s.repo.UpdateCategory(txCtx, category); err != nil {
-			return fmt.Errorf("failed update category: %v", err)
+			return fmt.Errorf("ошибка обновления категории: %v", err)
 		}
 		return nil
 	})
@@ -64,11 +86,20 @@ func (s *CategoryService) UpdateCategory(ctx context.Context, id uint64, name st
 }
 
 func (s *CategoryService) DeleteCategory(ctx context.Context, id uint64) error {
+	// Проверяем существование категории
+	_, err := s.repo.GetCategoryByID(ctx, id)
+	if err != nil {
+		return errs.ErrCategoryNotFound
+	}
 	return s.repo.DeleteCategory(ctx, id)
 }
 
 func (s *CategoryService) GetCategory(ctx context.Context, name string) (*models.Category, error) {
-	return s.repo.GetCategoryByName(ctx, name)
+	category, err := s.repo.GetCategoryByName(ctx, name)
+	if err != nil {
+		return nil, errs.ErrCategoryNotFound
+	}
+	return category, nil
 }
 
 func (s *CategoryService) GetListCategory(ctx context.Context, limit, offset int32) ([]*models.Category, int32, error) {

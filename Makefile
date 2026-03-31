@@ -1,7 +1,7 @@
 # Makefile для проекта Kinos
 # Микросервисная архитектура: api-service, user-service, catalog-service, inventory-service
 
-.PHONY: help build run test clean docker-up docker-down docker-restart proto generate migrate
+.PHONY: help build run test clean docker-up docker-down docker-restart proto generate migrate frontend
 
 # ==============================================================================
 # Справка
@@ -15,6 +15,67 @@ help: ## Показать список всех команд
 	@echo "Основные команды:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
+
+# ==============================================================================
+# Frontend (Vue.js)
+# ==============================================================================
+frontend-install: ## Установить зависимости frontend
+	cd frontend && npm install
+
+frontend-dev: ## Запустить frontend в режиме разработки
+	cd frontend && npm run dev
+
+frontend-build: ## Собрать frontend для production
+	cd frontend && npm run build
+
+frontend-lint: ## Запустить линтер frontend
+	cd frontend && npm run lint
+
+frontend: frontend-dev ## Запустить frontend (alias)
+
+# ==============================================================================
+# Docker
+# ==============================================================================
+docker-up: ## Запустить все контейнеры (фон)
+	@echo ">>> Запуск Docker контейнеров..."
+	docker-compose up -d
+
+docker-up-build: ## Запустить все контейнеры с пересборкой (фон)
+	@echo ">>> Запуск Docker контейнеров с пересборкой..."
+	docker-compose up -d --build
+
+docker-down: ## Остановить все контейнеры
+	@echo ">>> Остановка Docker контейнеров..."
+	docker-compose down
+
+docker-restart: ## Перезапустить все контейнеры
+	@echo ">>> Перезапуск Docker контейнеров..."
+	docker-compose restart
+
+docker-logs: ## Показать логи всех контейнеров
+	docker-compose logs -f
+
+docker-logs-frontend: ## Показать логи frontend
+	docker-compose logs -f frontend
+
+docker-logs-api: ## Показать логи api-service
+	docker-compose logs -f api-service
+
+docker-logs-user: ## Показать логи user-service
+	docker-compose logs -f user-service
+
+docker-logs-catalog: ## Показать логи catalog-service
+	docker-compose logs -f catalog-service
+
+docker-logs-inventory: ## Показать логи inventory-service
+	docker-compose logs -f inventory-service
+
+docker-ps: ## Показать статус контейнеров
+	docker-compose ps
+
+docker-clean: ## Очистить Docker кэш
+	@echo ">>> Очистка Docker кэша..."
+	docker system prune -f
 
 # ==============================================================================
 # Сборка Go проектов
@@ -189,9 +250,15 @@ tidy: ## Обновить зависимости go.mod
 	cd services/inventory-service && go mod tidy
 	cd proto && go mod tidy
 
+frontend-tidy: ## Обновить зависимости frontend
+	cd frontend && npm install
+
 lint: ## Запустить линтер
 	@echo ">>> Линтинг..."
 	golangci-lint run ./...
+
+frontend-lint: ## Запустить линтер frontend
+	cd frontend && npm run lint
 
 fmt: ## Форматировать код
 	@echo ">>> Форматирование..."
@@ -212,10 +279,17 @@ vet: ## Запустить go vet
 # ==============================================================================
 dev: docker-up ## Запустить среду разработки (Docker)
 	@echo ">>> Среда разработки запущена"
+	@echo ""
+	@echo "Frontend:          http://localhost:80"
 	@echo "API Service:       http://localhost:8080"
-	@echo "User Service:      http://localhost:8081 (gRPC)"
-	@echo "Catalog Service:   http://localhost:8082 (gRPC)"
-	@echo "Inventory Service: http://localhost:8083 (gRPC)"
+	@echo "User Service:      localhost:8081 (gRPC)"
+	@echo "Catalog Service:   localhost:8082 (gRPC)"
+	@echo "Inventory Service: localhost:8083 (gRPC)"
+	@echo ""
+	@echo "Команды для просмотра логов:"
+	@echo "  make docker-logs           - все логи"
+	@echo "  make docker-logs-frontend  - frontend логи"
+	@echo "  make docker-logs-api       - api-service логи"
 
 dev-stop: docker-down ## Остановить среду разработки
 	@echo ">>> Среда разработки остановлена"
@@ -227,6 +301,7 @@ up: docker-up-build ## alias для docker-up-build
 down: docker-down ## alias для docker-down
 restart: docker-restart ## alias для docker-restart
 logs: docker-logs ## alias для docker-logs
+ps: docker-ps ## alias для docker-ps
 
 # ==============================================================================
 # База данных
@@ -239,11 +314,25 @@ db-catalog-connect: ## Подключиться к catalog-db
 	@echo ">>> Подключение к catalog-db..."
 	docker exec -it catalog-db psql -U kinos -d catalog_db
 
+db-inventory-connect: ## Подключиться к inventory-db
+	@echo ">>> Подключение к inventory-db..."
+	docker exec -it inventory-db psql -U kinos -d inventory_db
+
+db-warehouse-connect: ## Подключиться к warehouse-db
+	@echo ">>> Подключение к warehouse-db..."
+	docker exec -it warehouse-db psql -U kinos -d warehouse_db
+
 db-user-shell: ## Открыть shell в user-db контейнере
 	docker exec -it user-db bash
 
 db-catalog-shell: ## Открыть shell в catalog-db контейнере
 	docker exec -it catalog-db bash
+
+db-inventory-shell: ## Открыть shell в inventory-db контейнере
+	docker exec -it inventory-db bash
+
+db-warehouse-shell: ## Открыть shell в warehouse-db контейнере
+	docker exec -it warehouse-db bash
 
 db-inventory-connect: ## Подключиться к inventory-db
 	@echo ">>> Подключение к inventory-db..."

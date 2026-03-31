@@ -5,9 +5,17 @@ package service
 import (
 	"context"
 	"fmt"
+
+	"kinos/catalog-service/internal/errs"
 	"kinos/catalog-service/internal/models"
 	"kinos/catalog-service/internal/repository"
 	"kinos/catalog-service/internal/validator"
+)
+
+// Алиасы ошибок из пакета errs
+var (
+	ErrManufacturerNotFound = errs.ErrManufacturerNotFound
+	ErrManufacturerExists   = errs.ErrManufacturerExists
 )
 
 type ManufacturersServiceInterface interface {
@@ -30,13 +38,17 @@ func NewManufacturersService(repo repository.ManufacturersRepositoryInterface, v
 
 func (s *ManufacturersService) CreateManufacturer(ctx context.Context, name string) (*models.Manufacturer, error) {
 	if err := s.validator.ValidateManufactures(validator.ManufacturersInput{Name: name}); err != nil {
-		return nil, fmt.Errorf("failed validate manufacturers: %v", err)
+		return nil, fmt.Errorf("ошибка валидации производителя: %v", err)
 	}
 	var manufacturer *models.Manufacturer
 	err := s.txManager.Do(ctx, func(txCtx context.Context) error {
+		existing, _ := s.repo.GetManufacturerByName(txCtx, name)
+		if existing != nil {
+			return errs.ErrManufacturerExists
+		}
 		manufacturerID, err := s.repo.CreateManufacturers(txCtx, &models.Manufacturer{Name: name})
 		if err != nil {
-			return fmt.Errorf("failed create manufacturers: %v", err)
+			return fmt.Errorf("ошибка создания производителя: %v", err)
 		}
 		manufacturer = &models.Manufacturer{Id: manufacturerID, Name: name}
 		return nil
@@ -46,13 +58,23 @@ func (s *ManufacturersService) CreateManufacturer(ctx context.Context, name stri
 
 func (s *ManufacturersService) UpdateManufacturer(ctx context.Context, id uint64, name string) (*models.Manufacturer, error) {
 	if err := s.validator.ValidateManufactures(validator.ManufacturersInput{Name: name}); err != nil {
-		return nil, fmt.Errorf("failed validate manufacturers: %v", err)
+		return nil, fmt.Errorf("ошибка валидации производителя: %v", err)
 	}
 	var manufacturer *models.Manufacturer
 	err := s.txManager.Do(ctx, func(txCtx context.Context) error {
+		// Проверяем существует ли производитель с таким именем (кроме текущего)
+		existing, _ := s.repo.GetManufacturerByName(txCtx, name)
+		if existing != nil && existing.Id != id {
+			return errs.ErrManufacturerExists
+		}
+		// Проверяем существует ли производитель с таким id
+		_, err := s.repo.GetManufacturerByID(txCtx, id)
+		if err != nil {
+			return errs.ErrManufacturerNotFound
+		}
 		manufacturer = &models.Manufacturer{Id: id, Name: name}
 		if err := s.repo.UpdateManufacturers(txCtx, manufacturer); err != nil {
-			return fmt.Errorf("failed update manufacturers: %v", err)
+			return fmt.Errorf("ошибка обновления производителя: %v", err)
 		}
 		return nil
 	})
@@ -60,11 +82,20 @@ func (s *ManufacturersService) UpdateManufacturer(ctx context.Context, id uint64
 }
 
 func (s *ManufacturersService) DeleteManufacturer(ctx context.Context, id uint64) error {
+	// Проверяем существование производителя
+	_, err := s.repo.GetManufacturerByID(ctx, id)
+	if err != nil {
+		return errs.ErrManufacturerNotFound
+	}
 	return s.repo.DeleteManufacturers(ctx, id)
 }
 
 func (s *ManufacturersService) GetManufacturer(ctx context.Context, name string) (*models.Manufacturer, error) {
-	return s.repo.GetManufacturerByName(ctx, name)
+	manufacturer, err := s.repo.GetManufacturerByName(ctx, name)
+	if err != nil {
+		return nil, errs.ErrManufacturerNotFound
+	}
+	return manufacturer, nil
 }
 
 func (s *ManufacturersService) GetListManufacturers(ctx context.Context, limit, offset int32) ([]*models.Manufacturer, int32, error) {

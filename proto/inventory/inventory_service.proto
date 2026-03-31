@@ -17,6 +17,7 @@ service InventoryService {
 
   // Управление складами
   rpc CreateWarehouse(CreateWarehouseRequest) returns (Warehouse);
+  rpc UpdateWarehouse(UpdateWarehouseRequest) returns (Warehouse);
   rpc GetListWarehouse(GetListWarehouseRequest) returns (ListWarehouseResponse);
   rpc DeleteWarehouse(DeleteWarehouseRequest) returns (google.protobuf.Empty);
 }
@@ -71,6 +72,15 @@ message CreateWarehouseRequest {
   string building2 = 5;
 }
 
+message UpdateWarehouseRequest {
+  uint64 id = 1;
+  string name = 2;
+  string city = 3;
+  string street = 4;
+  string building = 5;
+  string building2 = 6;
+}
+
 message GetListWarehouseRequest {
   int32 limit = 1;
   int32 offset = 2;
@@ -89,6 +99,7 @@ message Warehouse {
   string building = 5;
   string building2 = 6;
   string created_at = 7;
+  string updated_at = 8;
 }
 
 message ListWarehouseResponse {
