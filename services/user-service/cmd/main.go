@@ -38,6 +38,9 @@ func main() {
 	if cfg.DBURL == "" || cfg.SecretKey == "" {
 		log.Fatal("DB_URL and SECRET_KEY env vars must be set")
 	}
+	if len(cfg.SecretKey) < 32 {
+		log.Fatal("SECRET_KEY must be at least 32 bytes long")
+	}
 
 	pool, err := pgxpool.New(context.Background(), cfg.DBURL)
 	if err != nil {
@@ -103,5 +106,4 @@ func runMigrations(dbURL string) error {
 		return fmt.Errorf("error while running migrations: %v", err)
 	}
 	return nil
-
 }

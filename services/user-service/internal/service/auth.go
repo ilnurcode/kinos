@@ -15,12 +15,16 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// bcryptCost — стоимость хеширования bcrypt. 12 — рекомендуется для production.
+const bcryptCost = 12
+
 type Auth interface {
 	Register(ctx context.Context, username, email, password, phone string) (string, string, time.Time, error)
 	Login(ctx context.Context, email, password string) (string, string, time.Time, error)
 	Refresh(ctx context.Context, oldRefreshToken string) (string, string, time.Time, error)
 	RevokeRefresh(ctx context.Context, refreshToken string) error
 	UpdateRole(ctx context.Context, userID uint64, newRole string) error
+	DeleteUser(ctx context.Context, userID uint64) error
 }
 type AuthService struct {
 	UserRepo     repository.UserInterface
@@ -37,7 +41,7 @@ func NewAuthService(UserRepo repository.UserInterface, TokenService *TokenServic
 }
 
 func (s *AuthService) Register(ctx context.Context, username, email, password, phone string) (string, string, time.Time, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
 	if err != nil {
 		return "", "", time.Time{}, status.Errorf(codes.Internal, "ошибка при хешировании пароля: %v", err)
 	}
@@ -98,6 +102,17 @@ func (s *AuthService) UpdateRole(ctx context.Context, userID uint64, newRole str
 	err := s.UserRepo.UpdateRole(ctx, userID, newRole)
 	if err != nil {
 		return status.Errorf(codes.Internal, "ошибка при обновлении роли: %v", err)
+	}
+	return nil
+}
+
+func (s *AuthService) DeleteUser(ctx context.Context, userID uint64) error {
+	err := s.UserRepo.DeleteUser(ctx, userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return status.Error(codes.NotFound, "пользователь не найден")
+		}
+		return status.Errorf(codes.Internal, "ошибка при удалении пользователя: %v", err)
 	}
 	return nil
 }

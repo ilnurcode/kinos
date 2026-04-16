@@ -4,10 +4,11 @@ package catalog
 
 import (
 	"context"
-	pb "kinos/proto/catalog"
 	"net/http"
 	"strconv"
 	"time"
+
+	pb "kinos/proto/catalog"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,6 +23,17 @@ func NewHandler(c *CatalogClient) *Handler {
 	}
 }
 
+// CreateCategory godoc
+// @Summary Создать категорию
+// @Description Создать новую категорию товаров (только для администраторов)
+// @Tags catalog
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param name body string true "Название категории"
+// @Success 201 {object} object "Созданная категория"
+// @Failure 400 {object} object{error=string} "Некорректные данные"
+// @Router /api/admin/catalog/categories [post]
 func (h *Handler) CreateCategory(c *gin.Context) {
 	var req struct {
 		Name string `json:"name" binding:"required,min=1,max=100"`
@@ -30,7 +42,7 @@ func (h *Handler) CreateCategory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.CreateCategory(ctx, req.Name)
 	if err != nil {
@@ -40,6 +52,18 @@ func (h *Handler) CreateCategory(c *gin.Context) {
 	c.JSON(http.StatusCreated, resp)
 }
 
+// UpdateCategory godoc
+// @Summary Обновить категорию
+// @Description Обновить существующую категорию товаров (только для администраторов)
+// @Tags catalog
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path uint64 true "ID категории"
+// @Param name body string true "Название категории"
+// @Success 200 {object} object "Обновленная категория"
+// @Failure 400 {object} object{error=string} "Некорректные данные"
+// @Router /api/admin/catalog/categories/:id [put]
 func (h *Handler) UpdateCategory(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -54,7 +78,7 @@ func (h *Handler) UpdateCategory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.UpdateCategory(ctx, id, req.Name)
 	if err != nil {
@@ -71,7 +95,7 @@ func (h *Handler) DeleteCategory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	if _, err := h.client.DeleteCategory(ctx, id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -86,7 +110,7 @@ func (h *Handler) GetCategory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.GetCategory(ctx, name)
 	if err != nil {
@@ -105,7 +129,7 @@ func (h *Handler) GetListCategory(c *gin.Context) {
 	if offset <= 0 {
 		offset = 0
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.GetListCategory(ctx, int32(limit), int32(offset))
 	if err != nil {
@@ -123,7 +147,7 @@ func (h *Handler) CreateManufacturer(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.CreateManufacturer(ctx, req.Name)
 	if err != nil {
@@ -147,7 +171,7 @@ func (h *Handler) UpdateManufacturer(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.UpdateManufacturer(ctx, id, req.Name)
 	if err != nil {
@@ -164,7 +188,7 @@ func (h *Handler) DeleteManufacturer(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	if _, err := h.client.DeleteManufacturer(ctx, id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -179,7 +203,7 @@ func (h *Handler) GetManufacturers(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.GetManufacturer(ctx, name)
 	if err != nil {
@@ -198,7 +222,7 @@ func (h *Handler) GetManufacturersList(c *gin.Context) {
 	if offset <= 0 {
 		offset = 0
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.GetListManufacturer(ctx, int32(limit), int32(offset))
 	if err != nil {
@@ -219,7 +243,7 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.CreateProduct(ctx, req.Name, req.ManufacturerID, req.CategoryID, req.Price)
 	if err != nil {
@@ -246,7 +270,7 @@ func (h *Handler) UpdateProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.UpdateProduct(ctx, id, req.Name, req.ManufacturerID, req.CategoryID, req.Price)
 	if err != nil {
@@ -263,7 +287,7 @@ func (h *Handler) DeleteProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	if _, err := h.client.DeleteProduct(ctx, id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -271,13 +295,14 @@ func (h *Handler) DeleteProduct(c *gin.Context) {
 	}
 	c.Status(http.StatusNoContent)
 }
+
 func (h *Handler) GetProduct(c *gin.Context) {
 	name := c.Query("name")
 	if name == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.GetProduct(ctx, name)
 	if err != nil {
@@ -310,7 +335,7 @@ func (h *Handler) GetProductList(c *gin.Context) {
 		PriceMax:       priceMax,
 		NameContains:   nameContains,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := requestContext(c)
 	defer cancel()
 	resp, err := h.client.GetListProduct(ctx, req.Limit, req.Offset, req.CategoryId, req.ManufacturerId, req.PriceMax, req.PriceMin, req.NameContains)
 	if err != nil {
@@ -318,5 +343,8 @@ func (h *Handler) GetProductList(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, resp)
+}
 
+func requestContext(c *gin.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(c.Request.Context(), 10*time.Second)
 }

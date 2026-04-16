@@ -1,287 +1,216 @@
-# Makefile для проекта Kinos
-# Микросервисная архитектура: api-service, user-service, catalog-service, inventory-service
+SHELL := /bin/bash
+.SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: help build run test clean docker-up docker-down docker-restart proto generate migrate frontend
+SERVICES := services/api-service services/user-service services/catalog-service services/inventory-service services/cart-service services/order-service
+CACHE_DIR := $(CURDIR)/.cache
+GO_CACHE_DIR := $(CACHE_DIR)/go-build
+GO_TMP_DIR := $(CACHE_DIR)/go-tmp
+LOCAL_STATE_DIR := .local
+LOCAL_PID_DIR := $(LOCAL_STATE_DIR)/pids
+LOCAL_LOG_DIR := $(LOCAL_STATE_DIR)/logs
+DOCKER_ENV_FILES := .env services/user-service/.env.docker services/catalog-service/.env.docker services/inventory-service/.env.docker services/cart-service/.env.docker services/order-service/.env.docker
+LOCAL_ENV_FILES := .env frontend/.env services/user-service/.env services/catalog-service/.env services/inventory-service/.env services/cart-service/.env services/order-service/.env
+INFRA_SERVICES := user-db catalog-db inventory-db order-db redis
 
-# ==============================================================================
-# Справка
-# ==============================================================================
-help: ## Показать список всех команд
-	@echo "Kinos - Микросервисный проект"
-	@echo ""
-	@echo "Использование:"
-	@echo "  make <команда>"
-	@echo ""
-	@echo "Основные команды:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
-	@echo ""
+.PHONY: up down restart reset test test-coverage build run clean lint deps logs logs-app logs-db help env-docker env-local infra-up infra-down local-up local-down local-logs
 
-# ==============================================================================
-# Frontend (Vue.js)
-# ==============================================================================
-frontend-install: ## Установить зависимости frontend
-	cd frontend && npm install
+define ensure_files
+missing=0; \
+for file in $(1); do \
+	if [ ! -f "$$file" ]; then \
+		echo "Missing required file: $$file"; \
+		missing=1; \
+	fi; \
+done; \
+if [ "$$missing" -ne 0 ]; then \
+	exit 1; \
+fi
+endef
 
-frontend-dev: ## Запустить frontend в режиме разработки
-	cd frontend && npm run dev
+define run_go_for_services
+mkdir -p "$(GO_CACHE_DIR)" "$(GO_TMP_DIR)"; \
+for svc in $(SERVICES); do \
+	echo "==> $$svc"; \
+	(cd "$$svc" && GOCACHE="$(GO_CACHE_DIR)" GOTMPDIR="$(GO_TMP_DIR)" $(1)); \
+done
+endef
 
-frontend-build: ## Собрать frontend для production
-	cd frontend && npm run build
+define start_local_process
+mkdir -p "$(LOCAL_PID_DIR)" "$(LOCAL_LOG_DIR)"; \
+pid_file="$(LOCAL_PID_DIR)/$(1).pid"; \
+log_file="$(LOCAL_LOG_DIR)/$(1).log"; \
+if [ -f "$$pid_file" ] && kill -0 "$$(cat "$$pid_file")" 2>/dev/null; then \
+	echo "$(1) already running (pid $$(cat "$$pid_file"))"; \
+else \
+	echo "Starting $(1)..."; \
+	nohup bash -lc 'cd "$(2)" && $(3)' > "$$log_file" 2>&1 & \
+	echo $$! > "$$pid_file"; \
+	echo "$(1) started. Log: $$log_file"; \
+fi
+endef
 
-frontend-lint: ## Запустить линтер frontend
-	cd frontend && npm run lint
+define stop_local_process
+pid_file="$(LOCAL_PID_DIR)/$(1).pid"; \
+if [ -f "$$pid_file" ]; then \
+	pid="$$(cat "$$pid_file")"; \
+	if kill -0 "$$pid" 2>/dev/null; then \
+		echo "Stopping $(1) (pid $$pid)..."; \
+		kill "$$pid" || true; \
+		wait "$$pid" 2>/dev/null || true; \
+	fi; \
+	rm -f "$$pid_file"; \
+else \
+	echo "No pid file for $(1)"; \
+fi
+endef
 
-frontend: frontend-dev ## Запустить frontend (alias)
+# Подготовка env-файлов для Docker
+env-docker:
+	@[ -f .env ] || cp .env.example .env
+	@[ -f services/user-service/.env.docker ] || cp services/user-service/.env.docker.example services/user-service/.env.docker
+	@[ -f services/catalog-service/.env.docker ] || cp services/catalog-service/.env.docker.example services/catalog-service/.env.docker
+	@[ -f services/inventory-service/.env.docker ] || cp services/inventory-service/.env.docker.example services/inventory-service/.env.docker
+	@[ -f services/cart-service/.env.docker ] || cp services/cart-service/.env.docker.example services/cart-service/.env.docker
+	@[ -f services/order-service/.env.docker ] || cp services/order-service/.env.docker.example services/order-service/.env.docker
+	@echo "Docker env files are ready"
 
-# ==============================================================================
-# Docker
-# ==============================================================================
-docker-up: ## Запустить все контейнеры (фон)
-	@echo ">>> Запуск Docker контейнеров..."
-	docker-compose up -d
+# Подготовка env-файлов для локального запуска
+env-local:
+	@[ -f .env ] || cp .env.example .env
+	@[ -f frontend/.env ] || cp frontend/.env.example frontend/.env
+	@[ -f services/user-service/.env ] || cp services/user-service/.env.example services/user-service/.env
+	@[ -f services/catalog-service/.env ] || cp services/catalog-service/.env.example services/catalog-service/.env
+	@[ -f services/inventory-service/.env ] || cp services/inventory-service/.env.example services/inventory-service/.env
+	@[ -f services/cart-service/.env ] || cp services/cart-service/.env.example services/cart-service/.env
+	@[ -f services/order-service/.env ] || cp services/order-service/.env.example services/order-service/.env
+	@echo "Local env files are ready"
 
-docker-up-build: ## Запустить все контейнеры с пересборкой (фон)
-	@echo ">>> Запуск Docker контейнеров с пересборкой..."
-	docker-compose up -d --build
+# Запуск всех сервисов через Docker Compose
+up:
+	@$(call ensure_files,$(DOCKER_ENV_FILES))
+	docker compose up -d --build --remove-orphans
+	@echo "Services started. Frontend available at http://localhost, API at http://localhost:8080"
 
-docker-down: ## Остановить все контейнеры
-	@echo ">>> Остановка Docker контейнеров..."
-	docker-compose down
+# Остановка всех сервисов
+down:
+	docker compose down --remove-orphans
 
-docker-restart: ## Перезапустить все контейнеры
-	@echo ">>> Перезапуск Docker контейнеров..."
-	docker-compose restart
+# Перезапуск сервисов
+restart: down up
 
-docker-logs: ## Показать логи всех контейнеров
-	docker-compose logs -f
+# Полный сброс Docker-окружения
+reset:
+	docker compose down -v --remove-orphans
 
-docker-logs-frontend: ## Показать логи frontend
-	docker-compose logs -f frontend
+# Запуск тестов
+test:
+	@$(call run_go_for_services,go test ./...)
 
-docker-logs-api: ## Показать логи api-service
-	docker-compose logs -f api-service
+# Запуск тестов с покрытием
+test-coverage:
+	@mkdir -p "$(CACHE_DIR)"
+	@GOCACHE="$(GO_CACHE_DIR)" GOTMPDIR="$(GO_TMP_DIR)" go test ./services/api-service/internal/api/users -coverprofile=coverage.out
+	@go tool cover -func=coverage.out
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated: coverage.html"
 
-docker-logs-user: ## Показать логи user-service
-	docker-compose logs -f user-service
+# Сборка backend-сервисов
+build:
+	@$(call run_go_for_services,go build ./...)
 
-docker-logs-catalog: ## Показать логи catalog-service
-	docker-compose logs -f catalog-service
+# Локальный запуск проекта
+run: env-local
+	@$(call ensure_files,$(LOCAL_ENV_FILES))
+	@$(MAKE) infra-up
+	@$(call start_local_process,user-service,services/user-service,set -a; [ -f ./.env ] && . ./.env || true; set +a; exec go run ./cmd/main.go)
+	@$(call start_local_process,catalog-service,services/catalog-service,set -a; [ -f ./.env ] && . ./.env || true; set +a; exec go run ./cmd/main.go)
+	@$(call start_local_process,inventory-service,services/inventory-service,set -a; [ -f ./.env ] && . ./.env || true; set +a; exec go run ./cmd/main.go)
+	@$(call start_local_process,cart-service,services/cart-service,set -a; [ -f ./.env ] && . ./.env || true; set +a; exec go run ./cmd/main.go)
+	@$(call start_local_process,order-service,services/order-service,set -a; [ -f ./.env ] && . ./.env || true; set +a; exec go run ./cmd/main.go)
+	@$(call start_local_process,api-service,services/api-service,API_HTTP_PORT=8080 USER_GRPC_ADDR=localhost:8081 CATALOG_GRPC_ADDR=localhost:8082 INVENTORY_GRPC_ADDR=localhost:8083 CART_GRPC_ADDR=localhost:8084 ORDER_GRPC_ADDR=localhost:8085 CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:3000,http://localhost:5173 exec go run ./cmd/main.go)
+	@$(call start_local_process,frontend,frontend,set -a; [ -f ./.env ] && . ./.env || true; set +a; [ -d node_modules ] || npm ci; exec npm run dev -- --host 0.0.0.0)
+	@echo "Local project is starting. Logs stored in $(LOCAL_LOG_DIR)"
 
-docker-logs-inventory: ## Показать логи inventory-service
-	docker-compose logs -f inventory-service
+# Очистка
+clean:
+	go clean
+	rm -rf "$(CACHE_DIR)" "$(LOCAL_STATE_DIR)" bin
+	rm -f coverage.out coverage.html
 
-docker-ps: ## Показать статус контейнеров
-	docker-compose ps
+# Линтинг
+lint:
+	@$(call run_go_for_services,go vet ./...)
+	@cd frontend && npm run lint
 
-docker-clean: ## Очистить Docker кэш
-	@echo ">>> Очистка Docker кэша..."
-	docker system prune -f
+# Установка зависимостей
+deps:
+	@for svc in $(SERVICES) proto; do \
+		echo "==> $$svc"; \
+		(cd "$$svc" && go mod download); \
+	done
+	@cd frontend && npm install
 
-# ==============================================================================
-# Сборка Go проектов
-# ==============================================================================
-build: build-api build-user build-catalog build-inventory ## Собрать все сервисы
+# Показать логи сервисов
+logs:
+	docker compose logs -f
 
-build-api: ## Собрать api-service
-	@echo ">>> Сборка api-service..."
-	cd services/api-service && go build -o ../../bin/api-service ./cmd
+# Показать логи приложения
+logs-app:
+	docker compose logs -f api-service frontend user-service catalog-service inventory-service cart-service order-service
 
-build-user: ## Собрать user-service
-	@echo ">>> Сборка user-service..."
-	cd services/user-service && go build -o ../../bin/user-service ./cmd
+# Показать логи БД и Redis
+logs-db:
+	docker compose logs -f user-db catalog-db inventory-db order-db redis
 
-build-catalog: ## Собрать catalog-service
-	@echo ">>> Сборка catalog-service..."
-	cd services/catalog-service && go build -o ../../bin/catalog-service ./cmd
+# Поднять только инфраструктуру для локальной разработки
+infra-up:
+	@$(call ensure_files,.env)
+	docker compose up -d $(INFRA_SERVICES)
 
-build-inventory: ## Собрать inventory-service
-	@echo ">>> Сборка inventory-service..."
-	cd services/inventory-service && go build -o ../../bin/inventory-service ./cmd
+# Остановить только инфраструктуру
+infra-down:
+	docker compose stop $(INFRA_SERVICES)
 
-# ==============================================================================
-# Запуск Go проектов (локально)
-# ==============================================================================
-run: run-api run-user run-catalog run-inventory ## Запустить все сервисы (отдельные терминалы)
+# Полный локальный запуск
+local-up: run
 
-run-api: ## Запустить api-service
-	@echo ">>> Запуск api-service на :8080"
-	cd services/api-service && go run ./cmd/main.go
+# Остановить локальные процессы
+local-down:
+	@$(call stop_local_process,frontend)
+	@$(call stop_local_process,api-service)
+	@$(call stop_local_process,order-service)
+	@$(call stop_local_process,cart-service)
+	@$(call stop_local_process,inventory-service)
+	@$(call stop_local_process,catalog-service)
+	@$(call stop_local_process,user-service)
+	@docker compose stop $(INFRA_SERVICES) || true
 
-run-user: ## Запустить user-service
-	@echo ">>> Запуск user-service на :8081"
-	cd services/user-service && go run ./cmd/main.go
+# Показать логи локальных процессов
+local-logs:
+	@if ls "$(LOCAL_LOG_DIR)"/*.log >/dev/null 2>&1; then tail -f "$(LOCAL_LOG_DIR)"/*.log; else echo "No local logs found"; fi
 
-run-catalog: ## Запустить catalog-service
-	@echo ">>> Запуск catalog-service на :8082"
-	cd services/catalog-service && go run ./cmd/main.go
-
-run-inventory: ## Запустить inventory-service
-	@echo ">>> Запуск inventory-service на :8083"
-	cd services/inventory-service && go run ./cmd/main.go
-
-# ==============================================================================
-# Тестирование
-# ==============================================================================
-test: test-api test-user test-catalog test-inventory ## Запустить тесты всех сервисов
-
-test-api: ## Запустить тесты api-service
-	@echo ">>> Тесты api-service..."
-	cd services/api-service && go test ./... -v
-
-test-user: ## Запустить тесты user-service
-	@echo ">>> Тесты user-service..."
-	cd services/user-service && go test ./... -v
-
-test-catalog: ## Запустить тесты catalog-service
-	@echo ">>> Тесты catalog-service..."
-	cd services/catalog-service && go test ./... -v
-
-test-inventory: ## Запустить тесты inventory-service
-	@echo ">>> Тесты inventory-service..."
-	cd services/inventory-service && go test ./... -v
-
-# ==============================================================================
-# Протоколы (Protobuf)
-# ==============================================================================
-proto: ## Сгенерировать Go код из .proto файлов
-	@echo ">>> Генерация Protobuf..."
-	cd proto && go generate ./...
-
-proto-catalog: ## Сгенерировать Protobuf для catalog-service
-	@echo ">>> Генерация catalog Protobuf..."
-	cd proto/catalog && protoc --go_out=. --go_opt=paths=source_relative \
-		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		catalog_service.proto
-
-proto-user: ## Сгенерировать Protobuf для user-service
-	@echo ">>> Генерация user Protobuf..."
-	cd proto/user && protoc --go_out=. --go_opt=paths=source_relative \
-		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		user_service.proto
-
-proto-inventory: ## Сгенерировать Protobuf для inventory-service
-	@echo ">>> Генерация inventory Protobuf..."
-	cd proto/inventory && protoc --go_out=. --go_opt=paths=source_relative \
-		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		inventory_service.proto
-
-# ==============================================================================
-# Миграции базы данных
-# ==============================================================================
-migrate-user-up: ## Применить миграции user-db
-	@echo ">>> Миграции user-db (up)..."
-	cd services/user-service && go run ./cmd/main.go migrate up
-
-migrate-user-down: ## Откатить миграции user-db
-	@echo ">>> Миграции user-db (down)..."
-	cd services/user-service && go run ./cmd/main.go migrate down
-
-migrate-catalog-up: ## Применить миграции catalog-db
-	@echo ">>> Миграции catalog-db (up)..."
-	cd services/catalog-service && go run ./cmd/main.go migrate up
-
-migrate-catalog-down: ## Откатить миграции catalog-db
-	@echo ">>> Миграции catalog-db (down)..."
-	cd services/catalog-service && go run ./cmd/main.go migrate down
-
-migrate-inventory-up: ## Применить миграции inventory-db
-	@echo ">>> Миграции inventory-db (up)..."
-	cd services/inventory-service && go run ./cmd/main.go migrate up
-
-migrate-inventory-down: ## Откатить миграции inventory-db
-	@echo ">>> Миграции inventory-db (down)..."
-	cd services/inventory-service && go run ./cmd/main.go migrate down
-
-# ==============================================================================
-# Утилиты
-# ==============================================================================
-clean: ## Очистить bin и временные файлы
-	@echo ">>> Очистка..."
-	rm -rf bin/*
-	go clean -cache
-	go clean -modcache
-
-tidy: ## Обновить зависимости go.mod
-	@echo ">>> Обновление зависимостей..."
-	cd services/api-service && go mod tidy
-	cd services/user-service && go mod tidy
-	cd services/catalog-service && go mod tidy
-	cd services/inventory-service && go mod tidy
-	cd proto && go mod tidy
-
-frontend-tidy: ## Обновить зависимости frontend
-	cd frontend && npm install
-
-lint: ## Запустить линтер
-	@echo ">>> Линтинг..."
-	golangci-lint run ./...
-
-frontend-lint: ## Запустить линтер frontend
-	cd frontend && npm run lint
-
-fmt: ## Форматировать код
-	@echo ">>> Форматирование..."
-	cd services/api-service && go fmt ./...
-	cd services/user-service && go fmt ./...
-	cd services/catalog-service && go fmt ./...
-	cd services/inventory-service && go fmt ./...
-
-vet: ## Запустить go vet
-	@echo ">>> go vet..."
-	cd services/api-service && go vet ./...
-	cd services/user-service && go vet ./...
-	cd services/catalog-service && go vet ./...
-	cd services/inventory-service && go vet ./...
-
-# ==============================================================================
-# Разработка
-# ==============================================================================
-dev: docker-up ## Запустить среду разработки (Docker)
-	@echo ">>> Среда разработки запущена"
-	@echo ""
-	@echo "Frontend:          http://localhost:80"
-	@echo "API Service:       http://localhost:8080"
-	@echo "User Service:      localhost:8081 (gRPC)"
-	@echo "Catalog Service:   localhost:8082 (gRPC)"
-	@echo "Inventory Service: localhost:8083 (gRPC)"
-	@echo ""
-	@echo "Команды для просмотра логов:"
-	@echo "  make docker-logs           - все логи"
-	@echo "  make docker-logs-frontend  - frontend логи"
-	@echo "  make docker-logs-api       - api-service логи"
-
-dev-stop: docker-down ## Остановить среду разработки
-	@echo ">>> Среда разработки остановлена"
-
-# ==============================================================================
-# Быстрые команды для разработки
-# ==============================================================================
-up: docker-up-build ## alias для docker-up-build
-down: docker-down ## alias для docker-down
-restart: docker-restart ## alias для docker-restart
-logs: docker-logs ## alias для docker-logs
-ps: docker-ps ## alias для docker-ps
-
-# ==============================================================================
-# База данных
-# ==============================================================================
-db-user-connect: ## Подключиться к user-db
-	@echo ">>> Подключение к user-db..."
-	docker exec -it user-db psql -U kinos -d user_db
-
-db-catalog-connect: ## Подключиться к catalog-db
-	@echo ">>> Подключение к catalog-db..."
-	docker exec -it catalog-db psql -U kinos -d catalog_db
-
-db-inventory-connect: ## Подключиться к inventory-db
-	@echo ">>> Подключение к inventory-db..."
-	docker exec -it inventory-db psql -U kinos -d inventory_db
-
-db-user-shell: ## Открыть shell в user-db контейнере
-	docker exec -it user-db bash
-
-db-catalog-shell: ## Открыть shell в catalog-db контейнере
-	docker exec -it catalog-db bash
-
-db-inventory-shell: ## Открыть shell в inventory-db контейнере
-	docker exec -it inventory-db bash
+# Помощь
+help:
+	@echo "Available commands:"
+	@echo "  make env-docker    - Create Docker env files from examples"
+	@echo "  make env-local     - Create local env files from examples"
+	@echo "  make up            - Start all services with Docker Compose"
+	@echo "  make down          - Stop all services"
+	@echo "  make restart       - Restart all services"
+	@echo "  make reset         - Remove containers, volumes and orphans"
+	@echo "  make test          - Run backend tests"
+	@echo "  make test-coverage - Generate coverage.out and coverage.html"
+	@echo "  make build         - Build all backend services"
+	@echo "  make run           - Run frontend and backend locally"
+	@echo "  make clean         - Clean local artifacts"
+	@echo "  make lint          - Run go vet and frontend lint"
+	@echo "  make deps          - Download Go and frontend dependencies"
+	@echo "  make logs          - Show Docker Compose logs"
+	@echo "  make logs-app      - Show application logs"
+	@echo "  make logs-db       - Show database and Redis logs"
+	@echo "  make infra-up      - Start only databases and Redis"
+	@echo "  make infra-down    - Stop only databases and Redis"
+	@echo "  make local-up      - Alias for local run"
+	@echo "  make local-down    - Stop locally started processes"
+	@echo "  make local-logs    - Tail local process logs"
+	@echo "  make help          - Show this help message"

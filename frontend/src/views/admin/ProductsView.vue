@@ -3,22 +3,38 @@
     <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Управление товарами</h1>
-        <button class="btn btn-primary" @click="openCreateModal">
-          <i class="bi bi-plus-lg"></i> Добавить товар
+        <button
+          class="btn btn-primary"
+          @click="openCreateModal"
+        >
+          <i class="bi bi-plus-lg" /> Добавить товар
         </button>
       </div>
 
-      <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />
+      <ErrorAlert
+        v-if="error"
+        :message="error"
+        @dismiss="error = null"
+      />
 
-      <div v-if="loading" class="text-center py-5">
+      <div
+        v-if="loading"
+        class="text-center py-5"
+      >
         <LoadingSpinner text="Загрузка товаров..." />
       </div>
 
-      <div v-else-if="products.length === 0" class="alert alert-info">
+      <div
+        v-else-if="products.length === 0"
+        class="alert alert-info"
+      >
         Товары не найдены
       </div>
 
-      <div v-else class="card">
+      <div
+        v-else
+        class="card"
+      >
         <div class="card-body">
           <table class="table table-hover">
             <thead class="table-light">
@@ -32,17 +48,26 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="product in products" :key="product.id">
+              <tr
+                v-for="product in products"
+                :key="product.id"
+              >
                 <td>{{ product.id }}</td>
                 <td><strong>{{ product.name }}</strong></td>
                 <td>{{ getCategoryName(product.category_id) }}</td>
                 <td>{{ getManufacturerName(product.manufacturer_id) }}</td>
                 <td>{{ formatPrice(product.price) }}</td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary me-2" @click="openEditModal(product)">
+                  <button
+                    class="btn btn-sm btn-outline-primary me-2"
+                    @click="openEditModal(product)"
+                  >
                     ✏️ Редактировать
                   </button>
-                  <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(product)">
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    @click="confirmDelete(product)"
+                  >
                     🗑️ Удалить
                   </button>
                 </td>
@@ -55,12 +80,24 @@
   </div>
 
   <!-- Модальное окно -->
-  <div class="modal fade" :class="{ show: showModal }" :style="modalStyle" tabindex="-1" @click.self="closeModal">
+  <div
+    class="modal fade"
+    :class="{ show: showModal }"
+    :style="modalStyle"
+    tabindex="-1"
+    @click.self="closeModal"
+  >
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">{{ isEditing ? 'Редактировать товар' : 'Новый товар' }}</h5>
-          <button type="button" class="btn-close" @click="closeModal"></button>
+          <h5 class="modal-title">
+            {{ isEditing ? 'Редактировать товар' : 'Новый товар' }}
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            @click="closeModal"
+          />
         </div>
         <div class="modal-body">
           <form @submit.prevent="saveProduct">
@@ -68,27 +105,47 @@
               <div class="col-md-12 mb-3">
                 <label class="form-label">Название товара *</label>
                 <input
+                  v-model="form.name"
                   type="text"
                   class="form-control"
-                  v-model="form.name"
                   required
                   placeholder="Например: Смартфон Samsung Galaxy S24"
-                />
+                >
               </div>
               <div class="col-md-4 mb-3">
                 <label class="form-label">Категория *</label>
-                <select class="form-select" v-model="form.category_id" required>
-                  <option value="">Выберите категорию</option>
-                  <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                <select
+                  v-model="form.category_id"
+                  class="form-select"
+                  required
+                >
+                  <option value="">
+                    Выберите категорию
+                  </option>
+                  <option
+                    v-for="cat in categories"
+                    :key="cat.id"
+                    :value="cat.id"
+                  >
                     {{ cat.name }}
                   </option>
                 </select>
               </div>
               <div class="col-md-4 mb-3">
                 <label class="form-label">Производитель *</label>
-                <select class="form-select" v-model="form.manufacturer_id" required>
-                  <option value="">Выберите производителя</option>
-                  <option v-for="man in manufacturers" :key="man.id" :value="man.id">
+                <select
+                  v-model="form.manufacturer_id"
+                  class="form-select"
+                  required
+                >
+                  <option value="">
+                    Выберите производителя
+                  </option>
+                  <option
+                    v-for="man in manufacturers"
+                    :key="man.id"
+                    :value="man.id"
+                  >
                     {{ man.name }}
                   </option>
                 </select>
@@ -96,22 +153,36 @@
               <div class="col-md-4 mb-3">
                 <label class="form-label">Цена (₽) *</label>
                 <input
+                  v-model.number="form.price"
                   type="number"
                   class="form-control"
-                  v-model.number="form.price"
                   required
                   min="0"
                   step="1"
                   placeholder="99990"
-                />
+                >
               </div>
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="closeModal">Отмена</button>
-          <button type="button" class="btn btn-primary" @click="saveProduct" :disabled="saving">
-            <span v-if="saving" class="spinner-border spinner-border-sm"></span>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="closeModal"
+          >
+            Отмена
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            :disabled="saving"
+            @click="saveProduct"
+          >
+            <span
+              v-if="saving"
+              class="spinner-border spinner-border-sm"
+            />
             {{ saving ? 'Сохранение...' : 'Сохранить' }}
           </button>
         </div>
@@ -124,6 +195,7 @@
 import { adminApi } from '@/api/admin'
 import ErrorAlert from '@/components/common/ErrorAlert.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import { formatError } from '@/utils/errorHandler'
 import { computed, onMounted, ref } from 'vue'
 
 const products = ref([])

@@ -1,8 +1,9 @@
-// Package service предоставляет бизнес-логику для inventory-service.
 package service
 
 import (
 	"context"
+
+	"kinos/inventory-service/internal/errs"
 	"kinos/inventory-service/internal/model"
 	"kinos/inventory-service/internal/repository"
 	"kinos/inventory-service/internal/validator"
@@ -76,6 +77,9 @@ func (s *InventoryService) ReserveStock(ctx context.Context, productID uint64, q
 	if quantity <= 0 {
 		return validator.ErrInvalidQuantity
 	}
+	if reservationID == "" {
+		return errs.ErrInvalidReservationID
+	}
 
 	return s.txManager.Do(ctx, func(txCtx context.Context) error {
 		return s.inventoryRepo.ReserveStock(txCtx, productID, quantity, reservationID)
@@ -83,6 +87,10 @@ func (s *InventoryService) ReserveStock(ctx context.Context, productID uint64, q
 }
 
 func (s *InventoryService) ReleaseReservation(ctx context.Context, productID uint64, reservationID string) (int32, error) {
+	if reservationID == "" {
+		return 0, errs.ErrInvalidReservationID
+	}
+
 	var released int32
 	err := s.txManager.Do(ctx, func(txCtx context.Context) error {
 		var err error

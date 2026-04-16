@@ -12,6 +12,8 @@ bin/
 
 # Output of the go coverage tool
 *.out
+coverage/
+coverage-*.out
 
 # Dependency directories
 vendor/
@@ -29,8 +31,11 @@ go.work.sum
 
 # Environment variables
 .env
-.env.local
 .env.docker
+.env.local
+.env.*.local
+!.env.example
+!.env.docker.example
 
 # Docker
 docker-compose.override.yaml
@@ -46,10 +51,14 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+review-tmp/
+.cache/
+.local/
 
 # Build artifacts
 build/
 dist/
+node_modules/
 
 # Coverage
 coverage.txt
@@ -57,3 +66,10 @@ coverage.out
 
 # Mock files
 *_mock.go
+
+# Generated binaries
+cmd.exe
+go_build_*
+
+# Frontend env
+frontend/.env

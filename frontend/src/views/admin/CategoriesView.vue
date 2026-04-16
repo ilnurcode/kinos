@@ -3,22 +3,38 @@
     <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Управление категориями</h1>
-        <button class="btn btn-primary" @click="openCreateModal">
-          <i class="bi bi-plus-lg"></i> Добавить категорию
+        <button
+          class="btn btn-primary"
+          @click="openCreateModal"
+        >
+          <i class="bi bi-plus-lg" /> Добавить категорию
         </button>
       </div>
 
-      <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />
+      <ErrorAlert
+        v-if="error"
+        :message="error"
+        @dismiss="error = null"
+      />
 
-      <div v-if="loading" class="text-center py-5">
+      <div
+        v-if="loading"
+        class="text-center py-5"
+      >
         <LoadingSpinner text="Загрузка категорий..." />
       </div>
 
-      <div v-else-if="categories.length === 0" class="alert alert-info">
+      <div
+        v-else-if="categories.length === 0"
+        class="alert alert-info"
+      >
         Категории не найдены
       </div>
 
-      <div v-else class="card">
+      <div
+        v-else
+        class="card"
+      >
         <div class="card-body">
           <table class="table table-hover">
             <thead class="table-light">
@@ -29,14 +45,23 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="category in categories" :key="category.id">
+              <tr
+                v-for="category in categories"
+                :key="category.id"
+              >
                 <td>{{ category.id }}</td>
                 <td><strong>{{ category.name }}</strong></td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary me-2" @click="openEditModal(category)">
+                  <button
+                    class="btn btn-sm btn-outline-primary me-2"
+                    @click="openEditModal(category)"
+                  >
                     ✏️ Редактировать
                   </button>
-                  <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(category)">
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    @click="confirmDelete(category)"
+                  >
                     🗑️ Удалить
                   </button>
                 </td>
@@ -49,31 +74,57 @@
   </div>
 
   <!-- Модальное окно -->
-  <div class="modal fade" :class="{ show: showModal }" :style="modalStyle" tabindex="-1" @click.self="closeModal">
+  <div
+    class="modal fade"
+    :class="{ show: showModal }"
+    :style="modalStyle"
+    tabindex="-1"
+    @click.self="closeModal"
+  >
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">{{ isEditing ? 'Редактировать категорию' : 'Новая категория' }}</h5>
-          <button type="button" class="btn-close" @click="closeModal"></button>
+          <h5 class="modal-title">
+            {{ isEditing ? 'Редактировать категорию' : 'Новая категория' }}
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            @click="closeModal"
+          />
         </div>
         <div class="modal-body">
           <form @submit.prevent="saveCategory">
             <div class="mb-3">
               <label class="form-label">Название категории *</label>
               <input
+                v-model="form.name"
                 type="text"
                 class="form-control"
-                v-model="form.name"
                 required
                 placeholder="Например: Электроника"
-              />
+              >
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="closeModal">Отмена</button>
-          <button type="button" class="btn btn-primary" @click="saveCategory" :disabled="saving">
-            <span v-if="saving" class="spinner-border spinner-border-sm"></span>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="closeModal"
+          >
+            Отмена
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            :disabled="saving"
+            @click="saveCategory"
+          >
+            <span
+              v-if="saving"
+              class="spinner-border spinner-border-sm"
+            />
             {{ saving ? 'Сохранение...' : 'Сохранить' }}
           </button>
         </div>

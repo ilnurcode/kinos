@@ -3,6 +3,6 @@
 package models
 
 type Manufacturer struct {
-	Id   uint64
+	ID   uint64
 	Name string
 }

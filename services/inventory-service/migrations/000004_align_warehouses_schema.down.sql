@@ -1,0 +1,5 @@
+ALTER TABLE warehouses
+    DROP COLUMN IF EXISTS building2,
+    DROP COLUMN IF EXISTS building,
+    DROP COLUMN IF EXISTS street,
+    DROP COLUMN IF EXISTS city;

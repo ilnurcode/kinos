@@ -1,100 +1,113 @@
 syntax = "proto3";
+
 package user;
-option go_package="github.com/ilnurcode/Kinos/proto/user;user";
-service UserService{
-  rpc Register (RegisterRequest) returns (AuthResponse);
-  rpc Login (LoginRequest) returns (AuthResponse);
-  rpc Refresh (RefreshRequest) returns (AuthResponse);
-  rpc Revoke (RevokeRequest) returns (RevokeResponse);
-  rpc GetProfile (GetProfileRequest) returns (UserProfileResponse);
-  rpc UpdateRole (UpdateRoleRequest) returns (UpdateRoleResponse);
-  rpc UpdateProfile (UpdateProfileRequest) returns (UpdateProfileResponse);
-  rpc ValidateAccess (ValidateAccessRequest) returns (ValidateAccessResponse);
-  rpc GetUsers (GetUsersRequest) returns (GetUsersResponse);
-}
-message ValidateAccessRequest{
-  string access_token=1;
+
+option go_package = "kinos/proto/user;user";
+
+service UserService {
+  rpc Register(RegisterRequest) returns (AuthResponse);
+  rpc Login(LoginRequest) returns (AuthResponse);
+  rpc Refresh(RefreshRequest) returns (AuthResponse);
+  rpc Revoke(RevokeRequest) returns (RevokeResponse);
+  rpc GetProfile(GetProfileRequest) returns (UserProfileResponse);
+  rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+  rpc ValidateAccess(ValidateAccessRequest) returns (ValidateAccessResponse);
+  rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
 }
 
-message GetUsersRequest{
-  int32 limit=1;
-  int32 offset=2;
+message ValidateAccessRequest {
+  string access_token = 1;
 }
 
-message UserItem{
-  uint64 id=1;
-  string username=2;
-  string email=3;
-  string phone=4;
-  string role=5;
+message GetUsersRequest {
+  int32 limit = 1;
+  int32 offset = 2;
 }
 
-message GetUsersResponse{
-  repeated UserItem users=1;
-  int32 Total=2;
+message UserItem {
+  uint64 id = 1;
+  string username = 2;
+  string email = 3;
+  string phone = 4;
+  string role = 5;
 }
 
-message ValidateAccessResponse{
-  uint64 user_id=1;
-  string role=2;
-  bool valid=3;
+message GetUsersResponse {
+  repeated UserItem users = 1;
+  int32 total = 2;
 }
 
-
-message UpdateProfileRequest{
-  string username=1;
-  string email=2;
-  string phone=3;
+message ValidateAccessResponse {
+  uint64 user_id = 1;
+  string role = 2;
+  bool valid = 3;
 }
 
-message UpdateProfileResponse{
-  bool success=1;
+message UpdateProfileRequest {
+  string username = 1;
+  string email = 2;
+  string phone = 3;
 }
 
-message UpdateRoleRequest{
-  uint64 user_id=1;
-  string role=2;
+message UpdateProfileResponse {
+  bool success = 1;
 }
 
-message UpdateRoleResponse{
-  bool success=1;
+message UpdateRoleRequest {
+  uint64 user_id = 1;
+  string role = 2;
 }
 
-message RegisterRequest{
-  string username=1;
-  string email=2;
-  string password=3;
-  string phone=4;
+message UpdateRoleResponse {
+  bool success = 1;
 }
 
-message LoginRequest{
-  string email=1;
-  string password=2;
+message DeleteUserRequest {
+  uint64 user_id = 1;
 }
 
-message RefreshRequest{
-  string refresh_token=1;
+message DeleteUserResponse {
+  bool success = 1;
 }
 
-message RevokeRequest{
-  string refresh_token=1;
-}
-message RevokeResponse{
-  bool success=1;
-}
-
-message AuthResponse{
-  string access_token=1;
-  string refresh_token=2;
-  int64 refresh_expires_at=3;
+message RegisterRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+  string phone = 4;
 }
 
-message GetProfileRequest{}
-message UserProfileResponse{
-  uint64 user_id=1;
-  string username=2;
-  string email=3;
-  string phone=4;
-  string role=5;
+message LoginRequest {
+  string email = 1;
+  string password = 2;
 }
 
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message RevokeRequest {
+  string refresh_token = 1;
+}
+
+message RevokeResponse {
+  bool success = 1;
+}
+
+message AuthResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int64 refresh_expires_at = 3;
+}
+
+message GetProfileRequest {}
+
+message UserProfileResponse {
+  uint64 user_id = 1;
+  string username = 2;
+  string email = 3;
+  string phone = 4;
+  string role = 5;
+}

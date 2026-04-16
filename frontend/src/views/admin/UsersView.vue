@@ -3,23 +3,42 @@
     <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Управление пользователями</h1>
-        <button class="btn btn-primary" @click="loadUsers">
-          <span v-if="loading" class="spinner-border spinner-border-sm"></span>
+        <button
+          class="btn btn-primary"
+          @click="loadUsers"
+        >
+          <span
+            v-if="loading"
+            class="spinner-border spinner-border-sm"
+          />
           {{ loading ? 'Загрузка...' : 'Обновить' }}
         </button>
       </div>
 
-      <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />
+      <ErrorAlert
+        v-if="error"
+        :message="error"
+        @dismiss="error = null"
+      />
 
-      <div v-if="loading" class="text-center py-5">
+      <div
+        v-if="loading"
+        class="text-center py-5"
+      >
         <LoadingSpinner text="Загрузка пользователей..." />
       </div>
 
-      <div v-else-if="users.length === 0" class="alert alert-info">
+      <div
+        v-else-if="users.length === 0"
+        class="alert alert-info"
+      >
         Пользователи не найдены
       </div>
 
-      <div v-else class="card">
+      <div
+        v-else
+        class="card"
+      >
         <div class="card-body">
           <div class="table-responsive">
             <table class="table table-hover align-middle">
@@ -34,40 +53,60 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="user in users" :key="user.id">
+                <tr
+                  v-for="user in users"
+                  :key="user.id"
+                >
                   <td>{{ user.id }}</td>
                   <td>
                     <strong>{{ user.username }}</strong>
-                    <span v-if="user.id === currentUserId" class="badge bg-info ms-1">Вы</span>
+                    <span
+                      v-if="user.id === currentUserId"
+                      class="badge bg-info ms-1"
+                    >Вы</span>
                   </td>
                   <td>{{ user.email }}</td>
                   <td>{{ user.phone || '—' }}</td>
                   <td>
-                    <span v-if="user.id === currentUserId" class="badge" :class="getRoleBadge(user.role)">
+                    <span
+                      v-if="user.id === currentUserId"
+                      class="badge"
+                      :class="getRoleBadge(user.role)"
+                    >
                       {{ getRoleLabel(user.role) }}
                     </span>
                     <select
                       v-else
                       :value="user.role"
-                      @change="changeRole(user.id, user.username, $event.target.value)"
                       class="form-select form-select-sm"
                       :class="getRoleBadgeClass(user.role)"
+                      @change="changeRole(user.id, user.username, $event.target.value)"
                     >
-                      <option value="user">Пользователь</option>
-                      <option value="admin">Администратор</option>
+                      <option value="user">
+                        Пользователь
+                      </option>
+                      <option value="admin">
+                        Администратор
+                      </option>
                     </select>
                   </td>
                   <td>
                     <button
                       v-if="user.id !== currentUserId"
                       class="btn btn-sm btn-outline-danger"
-                      @click="confirmDelete(user)"
                       :disabled="deletingUserId === user.id"
+                      @click="confirmDelete(user)"
                     >
-                      <span v-if="deletingUserId === user.id" class="spinner-border spinner-border-sm"></span>
+                      <span
+                        v-if="deletingUserId === user.id"
+                        class="spinner-border spinner-border-sm"
+                      />
                       {{ deletingUserId === user.id ? '...' : 'Удалить' }}
                     </button>
-                    <span v-else class="text-muted">—</span>
+                    <span
+                      v-else
+                      class="text-muted"
+                    >—</span>
                   </td>
                 </tr>
               </tbody>

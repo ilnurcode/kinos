@@ -5,7 +5,6 @@ package users
 import (
 	"context"
 	pb "kinos/proto/user"
-	"log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -20,6 +19,7 @@ type UserClientInterface interface {
 	GetProfile(ctx context.Context, token string) (*pb.UserProfileResponse, error)
 	UpdateProfile(ctx context.Context, token, username, email, phone string) (*pb.UpdateProfileResponse, error)
 	UpdateRole(ctx context.Context, token, role string, userID uint64) (*pb.UpdateRoleResponse, error)
+	DeleteUser(ctx context.Context, token string, userID uint64) (*pb.DeleteUserResponse, error)
 	ValidateAccess(ctx context.Context, token string) (*pb.ValidateAccessResponse, error)
 	GetUsers(ctx context.Context, token string, limit, offset int32) (*pb.GetUsersResponse, error)
 }
@@ -28,13 +28,20 @@ type UserClient struct {
 	conn   *grpc.ClientConn
 }
 
-func NewUserClient(address string) *UserClient {
+func NewUserClient(address string) (*UserClient, error) {
 	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("failed to connect: %v", err)
+		return nil, err
 	}
 	c := pb.NewUserServiceClient(conn)
-	return &UserClient{conn: conn, client: c}
+	return &UserClient{conn: conn, client: c}, nil
+}
+
+func (uc *UserClient) Close() error {
+	if uc == nil || uc.conn == nil {
+		return nil
+	}
+	return uc.conn.Close()
 }
 
 func (uc *UserClient) Register(ctx context.Context, username, email, password, phone string) (*pb.AuthResponse, error) {
@@ -99,6 +106,17 @@ func (uc *UserClient) UpdateRole(ctx context.Context, token, role string, userID
 		Role:   role,
 	}
 	resp, err := uc.client.UpdateRole(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (uc *UserClient) DeleteUser(ctx context.Context, token string, userID uint64) (*pb.DeleteUserResponse, error) {
+	md := metadata.New(map[string]string{"authorization": "Bearer " + token})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	req := &pb.DeleteUserRequest{UserId: userID}
+	resp, err := uc.client.DeleteUser(ctx, req)
 	if err != nil {
 		return nil, err
 	}

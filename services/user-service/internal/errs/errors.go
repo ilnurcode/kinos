@@ -108,33 +108,3 @@ func formatValidationRule(tag, field string) string {
 	}
 	return fmt.Sprintf("%s не прошел валидацию (%s)", field, tag)
 }
-
-// IsNotFound проверяет, является ли ошибка ошибкой "не найдено"
-func IsNotFound(err error) bool {
-	return errors.Is(err, ErrNotFound)
-}
-
-// IsUserExists проверяет, является ли ошибка ошибкой "пользователь существует"
-func IsUserExists(err error) bool {
-	return errors.Is(err, ErrUserExists) || errors.Is(err, ErrEmailExists)
-}
-
-// IsInvalidCredentials проверяет, является ли ошибка ошибкой "неверные учетные данные"
-func IsInvalidCredentials(err error) bool {
-	return errors.Is(err, ErrInvalidCredentials)
-}
-
-// IsValidationError проверяет, является ли ошибка ошибкой валидации
-func IsValidationError(err error) bool {
-	var ve *ValidationError
-	return errors.As(err, &ve) || hasValidationErrors(err)
-}
-
-// hasValidationErrors проверяет наличие ошибок валидации в цепочке
-func hasValidationErrors(err error) bool {
-	errStr := err.Error()
-	return strings.Contains(errStr, "ошибка валидации") ||
-		strings.Contains(errStr, "обязятелен") ||
-		strings.Contains(errStr, "слишком короткий") ||
-		strings.Contains(errStr, "слишком длинный")
-}

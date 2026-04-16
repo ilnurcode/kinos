@@ -90,17 +90,17 @@ export const adminApi = {
   },
 
   async createInventory(inventory) {
-    const response = await apiClient.post('/inventory', inventory)
+    const response = await apiClient.post('/admin/inventory', inventory)
     return response.data
   },
 
   async updateInventory(id, inventory) {
-    const response = await apiClient.put(`/inventory/${id}`, inventory)
+    const response = await apiClient.put(`/admin/inventory/${id}`, inventory)
     return response.data
   },
 
   async deleteInventory(id) {
-    const response = await apiClient.delete(`/inventory/${id}`)
+    const response = await apiClient.delete(`/admin/inventory/${id}`)
     return response.data
   },
 
@@ -111,17 +111,17 @@ export const adminApi = {
   },
 
   async createWarehouse(warehouse) {
-    const response = await apiClient.post('/inventory/warehouses', warehouse)
+    const response = await apiClient.post('/admin/inventory/warehouses', warehouse)
     return response.data
   },
 
   async updateWarehouse(id, warehouse) {
-    const response = await apiClient.put(`/inventory/warehouses/${id}`, warehouse)
+    const response = await apiClient.put(`/admin/inventory/warehouses/${id}`, warehouse)
     return response.data
   },
 
   async deleteWarehouse(id) {
-    const response = await apiClient.delete(`/inventory/warehouses/${id}`)
+    const response = await apiClient.delete(`/admin/inventory/warehouses/${id}`)
     return response.data
   }
 }

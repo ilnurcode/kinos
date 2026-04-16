@@ -5,6 +5,7 @@ package grpcserver
 import (
 	"context"
 	"errors"
+
 	"kinos/catalog-service/internal/models"
 	"kinos/catalog-service/internal/service"
 	pb "kinos/proto/catalog"
@@ -29,8 +30,7 @@ func NewCatalogServer(prodSvc *service.ProductService, catSvc *service.CategoryS
 	}
 }
 
-//Категории
-
+// Категории
 func (s *CatalogServer) CreateCategory(ctx context.Context, req *pb.CreateCategoryRequest) (*pb.Category, error) {
 	if req.Name == "" {
 		return nil, status.Error(codes.InvalidArgument, "название категории обязательно")
@@ -42,7 +42,7 @@ func (s *CatalogServer) CreateCategory(ctx context.Context, req *pb.CreateCatego
 		}
 		return nil, status.Errorf(codes.Internal, "ошибка создания категории: %v", err)
 	}
-	return &pb.Category{Id: category.Id, Name: category.Name}, nil
+	return &pb.Category{Id: category.ID, Name: category.Name}, nil
 }
 
 func (s *CatalogServer) UpdateCategory(ctx context.Context, req *pb.UpdateCategoryRequest) (*pb.Category, error) {
@@ -59,7 +59,7 @@ func (s *CatalogServer) UpdateCategory(ctx context.Context, req *pb.UpdateCatego
 		}
 		return nil, status.Errorf(codes.Internal, "ошибка обновления категории: %v", err)
 	}
-	return &pb.Category{Id: category.Id, Name: category.Name}, nil
+	return &pb.Category{Id: category.ID, Name: category.Name}, nil
 }
 
 func (s *CatalogServer) DeleteCategory(ctx context.Context, req *pb.DeleteCategoryRequest) (*emptypb.Empty, error) {
@@ -83,7 +83,7 @@ func (s *CatalogServer) GetCategory(ctx context.Context, req *pb.GetCategoryRequ
 		}
 		return nil, status.Errorf(codes.Internal, "ошибка поиска категории: %v", err)
 	}
-	return &pb.Category{Id: category.Id, Name: category.Name}, nil
+	return &pb.Category{Id: category.ID, Name: category.Name}, nil
 }
 
 func (s *CatalogServer) GetListCategory(ctx context.Context, req *pb.GetListCategoryRequest) (*pb.ListCategoriesResponse, error) {
@@ -93,13 +93,12 @@ func (s *CatalogServer) GetListCategory(ctx context.Context, req *pb.GetListCate
 	}
 	var pbCategories []*pb.Category
 	for _, category := range categories {
-		pbCategories = append(pbCategories, &pb.Category{Id: category.Id, Name: category.Name})
+		pbCategories = append(pbCategories, &pb.Category{Id: category.ID, Name: category.Name})
 	}
 	return &pb.ListCategoriesResponse{Category: pbCategories, Total: total}, nil
 }
 
-//Производители
-
+// Производители
 func (s *CatalogServer) CreateManufacturer(ctx context.Context, req *pb.CreateManufacturerRequest) (*pb.Manufacturer, error) {
 	if req.Name == "" {
 		return nil, status.Error(codes.InvalidArgument, "название производителя обязательно")
@@ -111,7 +110,7 @@ func (s *CatalogServer) CreateManufacturer(ctx context.Context, req *pb.CreateMa
 		}
 		return nil, status.Errorf(codes.Internal, "ошибка создания производителя: %v", err)
 	}
-	return &pb.Manufacturer{Id: manufacturer.Id, Name: manufacturer.Name}, nil
+	return &pb.Manufacturer{Id: manufacturer.ID, Name: manufacturer.Name}, nil
 }
 
 func (s *CatalogServer) UpdateManufacturer(ctx context.Context, req *pb.UpdateManufacturerRequest) (*pb.Manufacturer, error) {
@@ -128,7 +127,7 @@ func (s *CatalogServer) UpdateManufacturer(ctx context.Context, req *pb.UpdateMa
 		}
 		return nil, status.Errorf(codes.Internal, "ошибка обновления производителя: %v", err)
 	}
-	return &pb.Manufacturer{Id: manufacturer.Id, Name: manufacturer.Name}, nil
+	return &pb.Manufacturer{Id: manufacturer.ID, Name: manufacturer.Name}, nil
 }
 
 func (s *CatalogServer) DeleteManufacturer(ctx context.Context, req *pb.DeleteManufacturerRequest) (*emptypb.Empty, error) {
@@ -152,7 +151,7 @@ func (s *CatalogServer) GetManufacturer(ctx context.Context, req *pb.GetManufact
 		}
 		return nil, status.Errorf(codes.Internal, "ошибка поиска производителя: %v", err)
 	}
-	return &pb.Manufacturer{Id: manufacturer.Id, Name: manufacturer.Name}, nil
+	return &pb.Manufacturer{Id: manufacturer.ID, Name: manufacturer.Name}, nil
 }
 
 func (s *CatalogServer) GetListManufacturers(ctx context.Context, req *pb.GetListManufacturerRequest) (*pb.ListManufacturerResponse, error) {
@@ -162,13 +161,12 @@ func (s *CatalogServer) GetListManufacturers(ctx context.Context, req *pb.GetLis
 	}
 	var pbManufacturer []*pb.Manufacturer
 	for _, m := range manufacturer {
-		pbManufacturer = append(pbManufacturer, &pb.Manufacturer{Id: m.Id, Name: m.Name})
+		pbManufacturer = append(pbManufacturer, &pb.Manufacturer{Id: m.ID, Name: m.Name})
 	}
 	return &pb.ListManufacturerResponse{Manufacturer: pbManufacturer, Total: total}, nil
 }
 
-//Товары
-
+// Товары
 func (s *CatalogServer) CreateProduct(ctx context.Context, req *pb.CreateProductRequest) (*pb.Product, error) {
 	if req.Name == "" {
 		return nil, status.Error(codes.InvalidArgument, "название товара обязательно")
@@ -189,7 +187,7 @@ func (s *CatalogServer) CreateProduct(ctx context.Context, req *pb.CreateProduct
 		}
 		return nil, status.Errorf(codes.Internal, "ошибка создания товара: %v", err)
 	}
-	return &pb.Product{Id: product.Id, Name: product.Name, ManufacturerId: product.ManufacturersId, CategoryId: product.CategoryId, Price: product.Price}, nil
+	return &pb.Product{Id: product.ID, Name: product.Name, ManufacturerId: product.ManufacturersID, CategoryId: product.CategoryID, Price: product.Price}, nil
 }
 
 func (s *CatalogServer) UpdateProduct(ctx context.Context, req *pb.UpdateProductRequest) (*pb.Product, error) {
@@ -212,7 +210,7 @@ func (s *CatalogServer) UpdateProduct(ctx context.Context, req *pb.UpdateProduct
 		}
 		return nil, status.Errorf(codes.Internal, "ошибка обновления товара: %v", err)
 	}
-	return &pb.Product{Id: product.Id, Name: product.Name, ManufacturerId: product.ManufacturersId, CategoryId: product.CategoryId, Price: product.Price}, nil
+	return &pb.Product{Id: product.ID, Name: product.Name, ManufacturerId: product.ManufacturersID, CategoryId: product.CategoryID, Price: product.Price}, nil
 }
 
 func (s *CatalogServer) DeleteProduct(ctx context.Context, req *pb.DeleteProductRequest) (*emptypb.Empty, error) {
@@ -236,16 +234,38 @@ func (s *CatalogServer) GetProduct(ctx context.Context, req *pb.GetProductReques
 		}
 		return nil, status.Errorf(codes.Internal, "ошибка поиска товара: %v", err)
 	}
-	return &pb.Product{Id: product.Id, Name: product.Name, ManufacturerId: product.ManufacturersId, CategoryId: product.CategoryId, Price: product.Price}, nil
+	return &pb.Product{Id: product.ID, Name: product.Name, ManufacturerId: product.ManufacturersID, CategoryId: product.CategoryID, Price: product.Price}, nil
+}
+
+func (s *CatalogServer) GetProductByID(ctx context.Context, req *pb.GetProductByIDRequest) (*pb.Product, error) {
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id товара обязателен")
+	}
+
+	product, err := s.prodSvc.GetProductByID(ctx, req.Id)
+	if err != nil {
+		if errors.Is(err, service.ErrProductNotFound) {
+			return nil, status.Error(codes.NotFound, "товар не найден")
+		}
+		return nil, status.Errorf(codes.Internal, "ошибка поиска товара: %v", err)
+	}
+
+	return &pb.Product{
+		Id:             product.ID,
+		Name:           product.Name,
+		ManufacturerId: product.ManufacturersID,
+		CategoryId:     product.CategoryID,
+		Price:          product.Price,
+	}, nil
 }
 
 func (s *CatalogServer) GetListProduct(ctx context.Context, req *pb.GetListProductRequest) (*pb.ListProductsResponse, error) {
 	filter := models.ProductFilter{}
 	if req.CategoryId != 0 {
-		filter.CategoryId = &req.CategoryId
+		filter.CategoryID = &req.CategoryId
 	}
 	if req.ManufacturerId != 0 {
-		filter.ManufacturersId = &req.ManufacturerId
+		filter.ManufacturersID = &req.ManufacturerId
 	}
 	if req.PriceMin != 0 {
 		filter.PriceMin = &req.PriceMin
@@ -263,10 +283,10 @@ func (s *CatalogServer) GetListProduct(ctx context.Context, req *pb.GetListProdu
 	var pbProducts []*pb.Product
 	for _, product := range products {
 		pbProducts = append(pbProducts, &pb.Product{
-			Id:             product.Id,
+			Id:             product.ID,
 			Name:           product.Name,
-			ManufacturerId: product.ManufacturersId,
-			CategoryId:     product.CategoryId,
+			ManufacturerId: product.ManufacturersID,
+			CategoryId:     product.CategoryID,
 			Price:          product.Price,
 		})
 	}

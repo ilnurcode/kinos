@@ -1,5 +1,5 @@
 // Package config предоставляет конфигурацию для catalog-service.
-// Включает загрузку переменных окружения (DB_URL, SECRET_KEY).
+// Включает загрузку переменных окружения (DB_URL).
 package config
 
 import (
@@ -7,13 +7,11 @@ import (
 )
 
 type Config struct {
-	DBURL     string
-	SecretKey string
+	DBURL string
 }
 
 func NewConfig() *Config {
 	return &Config{
-		DBURL:     os.Getenv("DB_URL"),
-		SecretKey: os.Getenv("SECRET_KEY"),
+		DBURL: os.Getenv("DB_URL"),
 	}
 }

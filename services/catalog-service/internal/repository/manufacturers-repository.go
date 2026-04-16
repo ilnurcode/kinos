@@ -31,7 +31,7 @@ func NewManufacturersRepository(db *pgxpool.Pool) *ManufacturersRepository {
 func (r *ManufacturersRepository) GetManufacturerByName(ctx context.Context, name string) (*models.Manufacturer, error) {
 	var manufacturer models.Manufacturer
 	querier := GetQuerier(ctx, r.DB)
-	err := querier.QueryRow(ctx, "SELECT manufacturers_id, manufacturers_name FROM manufacturers WHERE manufacturers_name=$1", name).Scan(&manufacturer.Id, &manufacturer.Name)
+	err := querier.QueryRow(ctx, "SELECT manufacturers_id, manufacturers_name FROM manufacturers WHERE manufacturers_name=$1", name).Scan(&manufacturer.ID, &manufacturer.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get manufacturer by name: %w", err)
 	}
@@ -41,7 +41,7 @@ func (r *ManufacturersRepository) GetManufacturerByName(ctx context.Context, nam
 func (r *ManufacturersRepository) GetManufacturerByID(ctx context.Context, id uint64) (*models.Manufacturer, error) {
 	var manufacturer models.Manufacturer
 	querier := GetQuerier(ctx, r.DB)
-	err := querier.QueryRow(ctx, "SELECT manufacturers_id, manufacturers_name FROM manufacturers WHERE manufacturers_id=$1", id).Scan(&manufacturer.Id, &manufacturer.Name)
+	err := querier.QueryRow(ctx, "SELECT manufacturers_id, manufacturers_name FROM manufacturers WHERE manufacturers_id=$1", id).Scan(&manufacturer.ID, &manufacturer.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get manufacturer by name: %w", err)
 	}
@@ -58,7 +58,7 @@ func (r *ManufacturersRepository) GetListManufacturers(ctx context.Context, limi
 	var manufacturers []*models.Manufacturer
 	for rows.Next() {
 		var manufacturer models.Manufacturer
-		if err := rows.Scan(&manufacturer.Id, &manufacturer.Name); err != nil {
+		if err := rows.Scan(&manufacturer.ID, &manufacturer.Name); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan list category: %w", err)
 		}
 		manufacturers = append(manufacturers, &manufacturer)
@@ -84,7 +84,7 @@ func (r *ManufacturersRepository) CreateManufacturers(ctx context.Context, manuf
 
 func (r *ManufacturersRepository) UpdateManufacturers(ctx context.Context, manufacturer *models.Manufacturer) error {
 	querier := GetQuerier(ctx, r.DB)
-	_, err := querier.Exec(ctx, "UPDATE manufacturers SET manufacturers_name=$1 WHERE manufacturers_id = $2", manufacturer.Name, manufacturer.Id)
+	_, err := querier.Exec(ctx, "UPDATE manufacturers SET manufacturers_name=$1 WHERE manufacturers_id = $2", manufacturer.Name, manufacturer.ID)
 	if err != nil {
 		return fmt.Errorf("failed to update manufacturers: %w", err)
 	}

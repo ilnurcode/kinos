@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package cart;
+
+option go_package = "kinos/proto/cart;cart";
+
+import "google/protobuf/empty.proto";
+
+service CartService {
+  rpc AddItem(AddItemRequest) returns (Cart);
+  rpc GetCart(GetCartRequest) returns (Cart);
+  rpc RemoveItem(RemoveItemRequest) returns (Cart);
+  rpc UpdateItem(UpdateItemRequest) returns (Cart);
+  rpc ClearCart(ClearCartRequest) returns (google.protobuf.Empty);
+  rpc GetItemsCount(GetItemsCountRequest) returns (ItemsCountResponse);
+}
+
+message AddItemRequest {
+  uint64 user_id = 1;
+  uint64 product_id = 2;
+  uint32 quantity = 3;
+}
+
+message GetCartRequest {
+  uint64 user_id = 1;
+}
+
+message RemoveItemRequest {
+  uint64 user_id = 1;
+  uint64 product_id = 2;
+}
+
+message UpdateItemRequest {
+  uint64 user_id = 1;
+  uint64 product_id = 2;
+  uint32 quantity = 3;
+}
+
+message ClearCartRequest {
+  uint64 user_id = 1;
+}
+
+message GetItemsCountRequest {
+  uint64 user_id = 1;
+}
+
+message Cart {
+  uint64 user_id = 1;
+  repeated CartItem items = 2;
+  double total = 3;
+  string updated_at = 4;
+}
+
+message CartItem {
+  uint64 product_id = 1;
+  string product_name = 2;
+  uint32 quantity = 3;
+  double price = 4;
+  string added_at = 5;
+}
+
+message ItemsCountResponse {
+  int32 count = 1;
+}

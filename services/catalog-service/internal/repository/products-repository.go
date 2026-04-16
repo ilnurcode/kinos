@@ -33,7 +33,7 @@ func NewProductsRepository(db *pgxpool.Pool) *ProductsRepository {
 func (r *ProductsRepository) GetProductByID(ctx context.Context, id uint64) (*models.Product, error) {
 	var product models.Product
 	querier := GetQuerier(ctx, r.DB)
-	err := querier.QueryRow(ctx, "SELECT * FROM products WHERE product_id=$1", id).Scan(&product.Id, &product.Name, &product.ManufacturersId, &product.CategoryId, &product.Price)
+	err := querier.QueryRow(ctx, "SELECT * FROM products WHERE product_id=$1", id).Scan(&product.ID, &product.Name, &product.ManufacturersID, &product.CategoryID, &product.Price)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get product by ID: %w", err)
 	}
@@ -43,7 +43,7 @@ func (r *ProductsRepository) GetProductByID(ctx context.Context, id uint64) (*mo
 func (r *ProductsRepository) GetProductByName(ctx context.Context, name string) (*models.Product, error) {
 	var products models.Product
 	querier := GetQuerier(ctx, r.DB)
-	err := querier.QueryRow(ctx, "SELECT * FROM products WHERE product_name=$1", name).Scan(&products.Id, &products.Name, &products.ManufacturersId, &products.CategoryId, &products.Price)
+	err := querier.QueryRow(ctx, "SELECT * FROM products WHERE product_name=$1", name).Scan(&products.ID, &products.Name, &products.ManufacturersID, &products.CategoryID, &products.Price)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get product by name: %w", err)
 	}
@@ -63,7 +63,7 @@ func (r *ProductsRepository) GetListProduct(ctx context.Context, filter models.P
 	defer rows.Close()
 	for rows.Next() {
 		var product models.Product
-		if err := rows.Scan(&product.Id, &product.Name, &product.ManufacturersId, &product.CategoryId, &product.Price); err != nil {
+		if err := rows.Scan(&product.ID, &product.Name, &product.ManufacturersID, &product.CategoryID, &product.Price); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan products: %w", err)
 		}
 		products = append(products, &product)
@@ -89,14 +89,14 @@ func buildFilterQuery(filter models.ProductFilter) (string, []interface{}) {
 	var args []interface{}
 	var where string
 	argIdx := 1
-	if filter.CategoryId != nil {
+	if filter.CategoryID != nil {
 		conditions = append(conditions, fmt.Sprintf("category_id = $%d", argIdx))
-		args = append(args, *filter.CategoryId)
+		args = append(args, *filter.CategoryID)
 		argIdx++
 	}
-	if filter.ManufacturersId != nil {
+	if filter.ManufacturersID != nil {
 		conditions = append(conditions, fmt.Sprintf("manufacturers_id = $%d", argIdx))
-		args = append(args, *filter.ManufacturersId)
+		args = append(args, *filter.ManufacturersID)
 		argIdx++
 	}
 	if filter.PriceMin != nil {
@@ -123,7 +123,7 @@ func buildFilterQuery(filter models.ProductFilter) (string, []interface{}) {
 func (r *ProductsRepository) CreateProduct(ctx context.Context, product *models.Product) (uint64, error) {
 	var productID uint64
 	querier := GetQuerier(ctx, r.DB)
-	err := querier.QueryRow(ctx, "INSERT INTO products (product_name, manufacturers_id, category_id, price) VALUES ($1, $2, $3, $4) RETURNING product_id", product.Name, product.ManufacturersId, product.CategoryId, product.Price).Scan(&productID)
+	err := querier.QueryRow(ctx, "INSERT INTO products (product_name, manufacturers_id, category_id, price) VALUES ($1, $2, $3, $4) RETURNING product_id", product.Name, product.ManufacturersID, product.CategoryID, product.Price).Scan(&productID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to update product: %w", err)
 	}
@@ -141,7 +141,7 @@ func (r *ProductsRepository) DeleteProduct(ctx context.Context, productID uint64
 
 func (r *ProductsRepository) UpdateProduct(ctx context.Context, product *models.Product) error {
 	querier := GetQuerier(ctx, r.DB)
-	_, err := querier.Exec(ctx, "UPDATE products SET product_name=$1, manufacturers_id=$2, category_id=$3, price=$4 WHERE product_id=$5", product.Name, product.ManufacturersId, product.CategoryId, product.Price, product.Id)
+	_, err := querier.Exec(ctx, "UPDATE products SET product_name=$1, manufacturers_id=$2, category_id=$3, price=$4 WHERE product_id=$5", product.Name, product.ManufacturersID, product.CategoryID, product.Price, product.ID)
 	if err != nil {
 		return fmt.Errorf("failed to update product: %w", err)
 	}

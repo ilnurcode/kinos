@@ -1,28 +1,27 @@
 syntax = "proto3";
+
 package inventory;
-option go_package="github.com/ilnurcode/Kinos/proto/inventory;inventory";
+
+option go_package = "kinos/proto/inventory;inventory";
+
 import "google/protobuf/empty.proto";
 
 service InventoryService {
-  // Управление запасами товаров
   rpc CreateInventory(CreateInventoryRequest) returns (Inventory);
   rpc UpdateInventory(UpdateInventoryRequest) returns (Inventory);
   rpc GetInventory(GetInventoryRequest) returns (Inventory);
   rpc GetListInventory(GetListInventoryRequest) returns (ListInventoryResponse);
   rpc DeleteInventory(DeleteInventoryRequest) returns (google.protobuf.Empty);
 
-  // Резервирование товаров
   rpc ReserveStock(ReserveStockRequest) returns (ReserveStockResponse);
   rpc ReleaseReservation(ReleaseReservationRequest) returns (ReleaseReservationResponse);
 
-  // Управление складами
   rpc CreateWarehouse(CreateWarehouseRequest) returns (Warehouse);
   rpc UpdateWarehouse(UpdateWarehouseRequest) returns (Warehouse);
   rpc GetListWarehouse(GetListWarehouseRequest) returns (ListWarehouseResponse);
   rpc DeleteWarehouse(DeleteWarehouseRequest) returns (google.protobuf.Empty);
 }
 
-// Запросы для управления запасами
 message CreateInventoryRequest {
   uint64 product_id = 1;
   int32 quantity = 2;
@@ -51,7 +50,6 @@ message DeleteInventoryRequest {
   uint64 id = 1;
 }
 
-// Запросы для резервирования
 message ReserveStockRequest {
   uint64 product_id = 1;
   int32 quantity = 2;
@@ -63,7 +61,6 @@ message ReleaseReservationRequest {
   string reservation_id = 2;
 }
 
-// Запросы для управления складами
 message CreateWarehouseRequest {
   string name = 1;
   string city = 2;
@@ -90,7 +87,6 @@ message DeleteWarehouseRequest {
   uint64 id = 1;
 }
 
-// Ответы для складов
 message Warehouse {
   uint64 id = 1;
   string name = 2;
@@ -107,7 +103,6 @@ message ListWarehouseResponse {
   int32 total = 2;
 }
 
-// Ответы
 message Inventory {
   uint64 id = 1;
   uint64 product_id = 2;

@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
   const loading = ref(false)
   const error = ref(null)
+  const initialized = ref(false)
   
   const isAuthenticated = computed(() => !!accessToken.value)
   const isAdmin = computed(() => user.value?.role === 'admin')
@@ -53,9 +54,31 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = response
       return response
     } catch (err) {
-      // Игнорируем ошибки профиля
+      user.value = null
       return null
     }
+  }
+
+  async function initializeAuth() {
+    if (initialized.value) {
+      return
+    }
+
+    const token = storage.get('access_token')
+    accessToken.value = token
+
+    if (!token) {
+      user.value = null
+      initialized.value = true
+      return
+    }
+
+    const profile = await fetchProfile()
+    if (!profile) {
+      logout()
+    }
+
+    initialized.value = true
   }
   
   async function refreshToken() {
@@ -74,6 +97,7 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value = null
     user.value = null
     storage.remove('access_token')
+    initialized.value = true
   }
   
   return {
@@ -81,11 +105,13 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     loading,
     error,
+    initialized,
     isAuthenticated,
     isAdmin,
     login,
     register,
     fetchProfile,
+    initializeAuth,
     refreshToken,
     logout
   }

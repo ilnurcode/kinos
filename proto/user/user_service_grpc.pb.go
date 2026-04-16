@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0--rc2
-// source: user_service.proto
+// source: user/user_service.proto
 
 package user
 
@@ -25,6 +25,7 @@ const (
 	UserService_Revoke_FullMethodName         = "/user.UserService/Revoke"
 	UserService_GetProfile_FullMethodName     = "/user.UserService/GetProfile"
 	UserService_UpdateRole_FullMethodName     = "/user.UserService/UpdateRole"
+	UserService_DeleteUser_FullMethodName     = "/user.UserService/DeleteUser"
 	UserService_UpdateProfile_FullMethodName  = "/user.UserService/UpdateProfile"
 	UserService_ValidateAccess_FullMethodName = "/user.UserService/ValidateAccess"
 	UserService_GetUsers_FullMethodName       = "/user.UserService/GetUsers"
@@ -40,6 +41,7 @@ type UserServiceClient interface {
 	Revoke(ctx context.Context, in *RevokeRequest, opts ...grpc.CallOption) (*RevokeResponse, error)
 	GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*UserProfileResponse, error)
 	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*UpdateRoleResponse, error)
+	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UpdateProfileResponse, error)
 	ValidateAccess(ctx context.Context, in *ValidateAccessRequest, opts ...grpc.CallOption) (*ValidateAccessResponse, error)
 	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error)
@@ -113,6 +115,16 @@ func (c *userServiceClient) UpdateRole(ctx context.Context, in *UpdateRoleReques
 	return out, nil
 }
 
+func (c *userServiceClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteUserResponse)
+	err := c.cc.Invoke(ctx, UserService_DeleteUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UpdateProfileResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateProfileResponse)
@@ -153,6 +165,7 @@ type UserServiceServer interface {
 	Revoke(context.Context, *RevokeRequest) (*RevokeResponse, error)
 	GetProfile(context.Context, *GetProfileRequest) (*UserProfileResponse, error)
 	UpdateRole(context.Context, *UpdateRoleRequest) (*UpdateRoleResponse, error)
+	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*UpdateProfileResponse, error)
 	ValidateAccess(context.Context, *ValidateAccessRequest) (*ValidateAccessResponse, error)
 	GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error)
@@ -183,6 +196,9 @@ func (UnimplementedUserServiceServer) GetProfile(context.Context, *GetProfileReq
 }
 func (UnimplementedUserServiceServer) UpdateRole(context.Context, *UpdateRoleRequest) (*UpdateRoleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateRole not implemented")
+}
+func (UnimplementedUserServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteUser not implemented")
 }
 func (UnimplementedUserServiceServer) UpdateProfile(context.Context, *UpdateProfileRequest) (*UpdateProfileResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateProfile not implemented")
@@ -322,6 +338,24 @@ func _UserService_UpdateRole_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).DeleteUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_DeleteUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).DeleteUser(ctx, req.(*DeleteUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_UpdateProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateProfileRequest)
 	if err := dec(in); err != nil {
@@ -408,6 +442,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_UpdateRole_Handler,
 		},
 		{
+			MethodName: "DeleteUser",
+			Handler:    _UserService_DeleteUser_Handler,
+		},
+		{
 			MethodName: "UpdateProfile",
 			Handler:    _UserService_UpdateProfile_Handler,
 		},
@@ -421,5 +459,5 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "user_service.proto",
+	Metadata: "user/user_service.proto",
 }

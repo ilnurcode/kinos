@@ -56,7 +56,7 @@ func main() {
 	inventorySvc := service.NewInventoryService(inventoryRepo, val, txManager)
 	warehouseSvc := service.NewWarehouseService(warehouseRepo, txManager)
 
-	list, err := net.Listen("tcp", ":8083")
+	list, err := net.Listen("tcp", ":"+cfg.GRPCPort)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -70,7 +70,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		log.Println("gRPC server started on :8083")
+		log.Printf("gRPC server started on :%s", cfg.GRPCPort)
 		if err := grpcServer.Serve(list); err != nil {
 			log.Fatalf("failed to serve: %v", err)
 		}
@@ -100,7 +100,27 @@ func runMigrations(dbURL string) error {
 		return fmt.Errorf("error while migrating database: %v", err)
 	}
 	defer m.Close()
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+
+	err = m.Up()
+	if err != nil {
+		if err == migrate.ErrNoChange {
+			return nil
+		}
+		// Если база в dirty state — фиксируем текущую версию как clean и повторяем Up.
+		// Force(0) переводил БД в состояние, где migrate ожидает несуществующую version 0 down.
+		version, dirty, _ := m.Version()
+		if dirty {
+			targetVersion := int(version)
+			log.Printf("Database is dirty at version %d. Forcing version %d (clean state) and retrying...", version, targetVersion)
+			if forceErr := m.Force(targetVersion); forceErr != nil {
+				return fmt.Errorf("failed to force clean dirty migration: %w", forceErr)
+			}
+			err = m.Up()
+			if err != nil && err != migrate.ErrNoChange {
+				return fmt.Errorf("error while running migrations after force clean: %v", err)
+			}
+			return nil
+		}
 		return fmt.Errorf("error while running migrations: %v", err)
 	}
 	return nil

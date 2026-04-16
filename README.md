@@ -1,176 +1,152 @@
-# Kinos — Микросервисный интернет-магазин
+# Kinos
 
-[![Go](https://img.shields.io/badge/Go-1.25-blue)](https://go.dev)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+Микросервисный интернет-магазин на Go, gRPC, PostgreSQL, Redis и Vue 3.
 
-Микросервисное приложение интернет-магазина, написанное на Go с использованием gRPC для межсервисной коммуникации.
+## Что есть в проекте
 
-## 🏗 Архитектура
+- `frontend` - клиентское приложение на Vue 3
+- `proto` - protobuf-контракты
+- `services/api-service` - HTTP gateway
+- `services/user-service` - пользователи, аутентификация, роли
+- `services/catalog-service` - категории, производители, товары
+- `services/inventory-service` - остатки и склады
+- `services/cart-service` - корзина
+- `services/order-service` - заказы
 
-```
-┌─────────────────┐
-│  API Service    │ :8080 (HTTP/REST + Web UI)
-│  (Frontend)     │
-└────────┬────────┘
-         │ gRPC
-    ┌────┴────┬──────────┐
-    │         │          │
-┌───▼────┐  ┌─▼──────┐ ┌─▼──────────┐
-│ User   │  │Catalog │ │ Inventory  │
-│ Service│  │Service │ │ Service    │
-│ :8081  │  │:8082   │ │ :8083      │
-└───┬────┘  └───┬────┘ └────┬───────┘
-    │           │           │
-┌───▼────┐  ┌───▼──────┐ ┌──▼────────┐
-│PostgreSQL│ │PostgreSQL│ │PostgreSQL │
-│user_db   │ │catalog_db│ │inventory_db│
-└──────────┘ └──────────┘ └───────────┘
-```
+## Требования
 
-## 📦 Сервисы
+Для Docker-режима:
 
-| Сервис | Порт | Описание |
-|--------|------|----------|
-| **api-service** | 8080 | API-шлюз, HTTP/REST, Web UI |
-| **user-service** | 8081 | Управление пользователями, аутентификация |
-| **catalog-service** | 8082 | Управление каталогом товаров |
-| **inventory-service** | 8083 | Управление запасами товаров, резервирование |
+- Docker Desktop
+- GNU Make
 
-## 🚀 Быстрый старт
+Для локального запуска:
 
-### Требования
+- Go 1.26.x
+- Node.js 20+
+- Bash
 
-- Docker и Docker Compose
-- Go 1.25+ (для локальной разработки бэкенда)
-- Node.js 18+ и npm 9+ (для frontend)
+`Makefile` рассчитан на bash. На Windows удобнее использовать Git Bash или WSL.
 
-### Запуск через Docker
+## Быстрый старт
+
+1. Подготовить env-файлы:
 
 ```bash
-# Запустить все сервисы (включая frontend)
-docker-compose up -d
-
-# Проверить статус
-docker-compose ps
+make env-docker
 ```
 
-Сервисы будут доступны по адресам:
-- **Frontend:** http://localhost:80
-- **API Service:** http://localhost:8080
-- **User Service (gRPC):** localhost:8081
-- **Catalog Service (gRPC):** localhost:8082
-- **Inventory Service (gRPC):** localhost:8083
+2. Заполнить секреты:
 
-### Локальная разработка
+- в `.env` заменить `POSTGRES_PASSWORD`
+- в `services/*/.env.docker` заменить все `CHANGE_ME*`
 
-#### Backend
+Важно:
+
+- пароль в `services/*/.env.docker` должен совпадать со значением `POSTGRES_PASSWORD` в корневом `.env`
+
+3. Поднять проект:
 
 ```bash
-# Установить зависимости
-go mod tidy
-
-# Запустить api-service
-cd services/api-service && go run ./cmd/main.go
+make up
 ```
 
-#### Frontend (Vue.js)
+После старта будут доступны:
+
+- frontend: `http://localhost`
+- API gateway: `http://localhost:8080`
+- healthcheck: `http://localhost:8080/health`
+- user-service gRPC: `localhost:8081`
+- catalog-service gRPC: `localhost:8082`
+- inventory-service gRPC: `localhost:8083`
+- cart-service gRPC: `localhost:8084`
+- order-service gRPC: `localhost:8085`
+
+## Основные команды
 
 ```bash
-# Перейти в папку frontend
-cd frontend
-
-# Установить зависимости
-npm install
-
-# Запустить в режиме разработки
-npm run dev
+make up
+make down
+make restart
+make reset
+make test
+make test-coverage
+make build
+make run
+make clean
+make lint
+make deps
+make logs
+make logs-app
+make logs-db
+make help
 ```
 
-Frontend будет доступен по адресу: http://localhost:3000
+## Что делают команды
 
-## 📋 API Endpoints
+- `make up` - поднимает весь проект через Docker Compose
+- `make down` - останавливает контейнеры
+- `make restart` - перезапускает проект
+- `make reset` - удаляет контейнеры, volumes и orphan-сервисы
+- `make test` - запускает backend-тесты по всем сервисам
+- `make test-coverage` - генерирует `coverage.out` и `coverage.html`
+- `make build` - собирает все backend-сервисы
+- `make run` - запускает frontend и backend локально
+- `make clean` - чистит локальные артефакты
+- `make lint` - запускает `go vet` и frontend lint
+- `make deps` - скачивает Go и frontend зависимости
+- `make logs` - показывает все Docker-логи
+- `make logs-app` - показывает логи приложений
+- `make logs-db` - показывает логи PostgreSQL и Redis
 
-### Публичные endpoints
+## Локальный запуск
 
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| POST | `/api/users/register` | Регистрация |
-| POST | `/api/users/login` | Вход |
-| GET | `/api/catalog/categories` | Список категорий |
-| GET | `/api/catalog/products` | Список товаров |
-| GET | `/api/inventory` | Запас товара по ID |
-| GET | `/api/inventory/list` | Список запасов |
-| POST | `/api/inventory/reserve` | Резервирование товара |
-| POST | `/api/inventory/release` | Снятие резервирования |
-
-### Защищённые endpoints
-
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| GET | `/api/profile` | Профиль пользователя |
-| PUT | `/api/profile` | Обновление профиля |
-
-### Admin endpoints
-
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| GET | `/api/admin/users` | Список пользователей |
-| PUT | `/api/admin/users/role` | Изменение роли |
-| POST/PUT/DELETE | `/api/admin/catalog/*` | Управление каталогом |
-
-## 🛠 Разработка
-
-### Makefile команды
+1. Подготовить локальные env-файлы:
 
 ```bash
-make help     # Показать все команды
-make build    # Собрать все сервисы
-make test     # Запустить тесты
-make clean    # Очистить временные файлы
+make env-local
 ```
 
-### Запуск тестов
+2. Запустить проект:
 
 ```bash
-# Все тесты
-go test ./services/...
-
-# Отдельно по сервисам
-go test ./services/user-service/...
-go test ./services/catalog-service/...
+make run
 ```
 
-## 📁 Структура проекта
+Локально будут запущены:
 
+- frontend через Vite
+- backend-сервисы как локальные процессы
+- PostgreSQL и Redis через Docker Compose
+
+Логи локальных процессов пишутся в `.local/logs`, pid-файлы лежат в `.local/pids`.
+
+Остановить локальные процессы:
+
+```bash
+make local-down
 ```
-kinos/
-├── proto/                    # Protobuf определения
-├── services/
-│   ├── api-service/         # API-шлюз
-│   ├── user-service/        # Сервис пользователей
-│   ├── catalog-service/     # Сервис каталога
-│   └── inventory-service/   # Сервис управления запасами
-├── docker-compose.yaml      # Docker конфигурация
-├── Makefile                 # Автоматизация задач
-└── README.md                # Документация
+
+Посмотреть их логи:
+
+```bash
+make local-logs
 ```
 
-## 🔐 Аутентификация
+Для локального режима базы доступны на host:
 
-Проект использует JWT-токены для аутентификации:
-- **Access Token** — короткоживущий токен (15 минут)
-- **Refresh Token** — долгоживущий токен (30 дней, HttpOnly cookie)
+- user-db: `localhost:54321`
+- catalog-db: `localhost:54322`
+- inventory-db: `localhost:54323`
+- order-db: `localhost:54324`
 
-## 📊 Технологии
+## Проверки перед публикацией
 
-- **Язык:** Go 1.25
-- **RPC:** gRPC
-- **Web Framework:** Gin
-- **База данных:** PostgreSQL 18
-- **Миграции:** golang-migrate
-- **Валидация:** go-playground/validator
-- **Контейнеризация:** Docker, Docker Compose
+- не добавлять в git реальные `.env`, `.env.docker`, `frontend/.env`
+- перед публикацией проверить `git status`
+- для проверки чистого старта использовать `make reset`, затем `make up`
+- убедиться, что проходят `make test`, `make lint`, `npm run build`
 
-## 📝 Лицензия
+## Лицензия
 
-MIT License — см. файл [LICENSE](LICENSE)
+MIT

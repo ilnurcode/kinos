@@ -1,29 +1,33 @@
 <template>
   <div class="product-filters card">
     <div class="card-body">
-      <h5 class="card-title mb-3">Фильтры</h5>
+      <h5 class="card-title mb-3">
+        Фильтры
+      </h5>
       
       <!-- Поиск -->
       <div class="mb-3">
         <label class="form-label">Поиск</label>
         <input 
+          v-model="localFilters.search" 
           type="text" 
-          class="form-control" 
+          class="form-control"
           placeholder="Название товара..."
-          v-model="localFilters.search"
           @input="applyFilters"
-        />
+        >
       </div>
       
       <!-- Категория -->
       <div class="mb-3">
         <label class="form-label">Категория</label>
         <select 
-          class="form-select" 
-          v-model="localFilters.category_id"
+          v-model="localFilters.category_id" 
+          class="form-select"
           @change="applyFilters"
         >
-          <option value="">Все категории</option>
+          <option value="">
+            Все категории
+          </option>
           <option 
             v-for="category in categories" 
             :key="category.id" 
@@ -38,11 +42,13 @@
       <div class="mb-3">
         <label class="form-label">Производитель</label>
         <select 
-          class="form-select" 
-          v-model="localFilters.manufacturer_id"
+          v-model="localFilters.manufacturer_id" 
+          class="form-select"
           @change="applyFilters"
         >
-          <option value="">Все производители</option>
+          <option value="">
+            Все производители
+          </option>
           <option 
             v-for="manufacturer in manufacturers" 
             :key="manufacturer.id" 
@@ -57,26 +63,26 @@
       <div class="mb-3">
         <label class="form-label">Цена от</label>
         <input 
+          v-model="localFilters.price_min" 
           type="number" 
-          class="form-control" 
+          class="form-control"
           placeholder="0"
-          v-model="localFilters.price_min"
-          @input="applyFilters"
           min="0"
-        />
+          @input="applyFilters"
+        >
       </div>
       
       <!-- Цена до -->
       <div class="mb-3">
         <label class="form-label">Цена до</label>
         <input 
+          v-model="localFilters.price_max" 
           type="number" 
-          class="form-control" 
+          class="form-control"
           placeholder="∞"
-          v-model="localFilters.price_max"
-          @input="applyFilters"
           min="0"
-        />
+          @input="applyFilters"
+        >
       </div>
       
       <!-- Сбросить фильтры -->

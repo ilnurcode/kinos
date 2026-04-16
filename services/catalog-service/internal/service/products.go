@@ -23,6 +23,7 @@ type ProductServiceInterface interface {
 	UpdateProduct(ctx context.Context, productID uint64, name string, manufacturerID, categoryID uint64, price float64) (*models.Product, error)
 	DeleteProduct(ctx context.Context, productID uint64) error
 	GetProduct(ctx context.Context, name string) (*models.Product, error)
+	GetProductByID(ctx context.Context, productID uint64) (*models.Product, error)
 	GetListProduct(ctx context.Context, filter models.ProductFilter, limit, offset int32) ([]*models.Product, int32, error)
 }
 
@@ -70,15 +71,15 @@ func (s *ProductService) CreateProduct(ctx context.Context, name string, manufac
 		}
 		productID, err := s.prodRep.CreateProduct(txCtx, &models.Product{
 			Name:            name,
-			ManufacturersId: manufacturerID,
-			CategoryId:      categoryID,
+			ManufacturersID: manufacturerID,
+			CategoryID:      categoryID,
 			Price:           price,
 		})
 		if err != nil {
 			return fmt.Errorf("ошибка создания товара: %w", err)
 		}
 		product = &models.Product{
-			Id:   productID,
+			ID:   productID,
 			Name: name,
 		}
 		return nil
@@ -112,14 +113,14 @@ func (s *ProductService) UpdateProduct(ctx context.Context, productID uint64, na
 		}
 		// Проверяем, не используется ли имя другим товаром
 		productByName, _ := s.prodRep.GetProductByName(txCtx, name)
-		if productByName != nil && productByName.Id != productID {
+		if productByName != nil && productByName.ID != productID {
 			return errs.ErrProductExists
 		}
 		product = &models.Product{
-			Id:              productID,
+			ID:              productID,
 			Name:            name,
-			ManufacturersId: manufacturerID,
-			CategoryId:      categoryID,
+			ManufacturersID: manufacturerID,
+			CategoryID:      categoryID,
 			Price:           price,
 		}
 		if err := s.prodRep.UpdateProduct(txCtx, product); err != nil {
@@ -141,6 +142,14 @@ func (s *ProductService) DeleteProduct(ctx context.Context, productID uint64) er
 
 func (s *ProductService) GetProduct(ctx context.Context, name string) (*models.Product, error) {
 	product, err := s.prodRep.GetProductByName(ctx, name)
+	if err != nil {
+		return nil, errs.ErrProductNotFound
+	}
+	return product, nil
+}
+
+func (s *ProductService) GetProductByID(ctx context.Context, productID uint64) (*models.Product, error) {
+	product, err := s.prodRep.GetProductByID(ctx, productID)
 	if err != nil {
 		return nil, errs.ErrProductNotFound
 	}

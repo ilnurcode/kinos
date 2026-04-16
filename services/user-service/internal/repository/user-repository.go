@@ -21,10 +21,10 @@ type UserInterface interface {
 		Username,
 		Email,
 		Phone string) error
-	DeleteUser(ctx context.Context, ID uint64) error
 	FindUserByEmail(ctx context.Context, email string) (*models.User, error)
 	FindUserByID(ctx context.Context, ID uint64) (*models.User, error)
 	UpdateRole(ctx context.Context, userID uint64, role string) error
+	DeleteUser(ctx context.Context, userID uint64) error
 	GetAllUsers(ctx context.Context, limit, offset int32) ([]*models.User, int32, error)
 }
 type UserRepository struct {
@@ -51,6 +51,18 @@ func (r *UserRepository) UpdateRole(ctx context.Context, userID uint64, role str
 	querier := GetQuerier(ctx, r.DB)
 	_, err := querier.Exec(ctx, "UPDATE users SET role = $1 WHERE user_ID = $2", role, userID)
 	return err
+}
+
+func (r *UserRepository) DeleteUser(ctx context.Context, userID uint64) error {
+	querier := GetQuerier(ctx, r.DB)
+	tag, err := querier.Exec(ctx, "DELETE FROM users WHERE user_ID = $1", userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (r *UserRepository) FindUserByID(ctx context.Context, ID uint64) (*models.User, error) {
@@ -89,15 +101,6 @@ func (r *UserRepository) CreateUser(ctx context.Context, username, email, passwo
 		return 0, fmt.Errorf("failed to create user: %w", err)
 	}
 	return userID, nil
-}
-
-func (r *UserRepository) DeleteUser(ctx context.Context, ID uint64) error {
-	querier := GetQuerier(ctx, r.DB)
-	_, err := querier.Exec(ctx, "DELETE FROM users WHERE user_ID = $1", ID)
-	if err != nil {
-		return fmt.Errorf("failed to delete user: %w", err)
-	}
-	return nil
 }
 
 func (r *UserRepository) UpdateProfile(ctx context.Context,

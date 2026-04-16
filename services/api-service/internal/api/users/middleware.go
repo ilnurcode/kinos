@@ -34,7 +34,7 @@ func (m *AuthMiddleware) AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 		tokenStr := strings.TrimPrefix(auth, prefix)
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 		defer cancel()
 		resp, err := m.UserClient.ValidateAccess(ctx, tokenStr)
 		if err != nil || !resp.Valid {

@@ -5,7 +5,9 @@
         <div class="col-md-8 col-lg-6">
           <div class="card shadow-sm">
             <div class="card-header bg-success text-white">
-              <h4 class="mb-0">Редактирование профиля</h4>
+              <h4 class="mb-0">
+                Редактирование профиля
+              </h4>
             </div>
             <div class="card-body">
               <ErrorAlert
@@ -16,50 +18,68 @@
 
               <form @submit.prevent="handleSubmit">
                 <div class="mb-3">
-                  <label for="username" class="form-label">Имя пользователя</label>
+                  <label
+                    for="username"
+                    class="form-label"
+                  >Имя пользователя</label>
                   <input
-                    type="text"
-                    class="form-control"
                     id="username"
                     v-model="form.username"
+                    type="text"
+                    class="form-control"
                     :class="{ 'is-invalid': errors.username }"
                     required
-                  />
-                  <div class="invalid-feedback" v-if="errors.username">
+                  >
+                  <div
+                    v-if="errors.username"
+                    class="invalid-feedback"
+                  >
                     {{ errors.username }}
                   </div>
                 </div>
 
                 <div class="mb-3">
-                  <label for="email" class="form-label">Email</label>
+                  <label
+                    for="email"
+                    class="form-label"
+                  >Email</label>
                   <input
-                    type="email"
-                    class="form-control"
                     id="email"
                     v-model="form.email"
+                    type="email"
+                    class="form-control"
                     :class="{ 'is-invalid': errors.email }"
                     required
-                  />
-                  <div class="invalid-feedback" v-if="errors.email">
+                  >
+                  <div
+                    v-if="errors.email"
+                    class="invalid-feedback"
+                  >
                     {{ errors.email }}
                   </div>
                 </div>
 
                 <div class="mb-3">
-                  <label for="phone" class="form-label">Телефон</label>
+                  <label
+                    for="phone"
+                    class="form-label"
+                  >Телефон</label>
                   <div class="input-group">
                     <span class="input-group-text">+7</span>
                     <input
-                      type="tel"
-                      class="form-control"
                       id="phone"
                       v-model="form.phone"
+                      type="tel"
+                      class="form-control"
                       :class="{ 'is-invalid': errors.phone }"
                       placeholder="999 123 45 67"
                       maxlength="14"
-                    />
+                    >
                   </div>
-                  <div class="invalid-feedback" v-if="errors.phone">
+                  <div
+                    v-if="errors.phone"
+                    class="invalid-feedback"
+                  >
                     {{ errors.phone }}
                   </div>
                   <small class="text-muted">Введите 10 цифр номера</small>
@@ -71,10 +91,16 @@
                     class="btn btn-success"
                     :disabled="loading"
                   >
-                    <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                    <span
+                      v-if="loading"
+                      class="spinner-border spinner-border-sm me-2"
+                    />
                     {{ loading ? 'Сохранение...' : 'Сохранить' }}
                   </button>
-                  <router-link to="/profile" class="btn btn-outline-secondary">
+                  <router-link
+                    to="/profile"
+                    class="btn btn-outline-secondary"
+                  >
                     Отмена
                   </router-link>
                 </div>
@@ -90,11 +116,12 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { authApi } from '@/api/auth'
 import { useAuth } from '@/composables/useAuth'
 import ErrorAlert from '@/components/common/ErrorAlert.vue'
 
 const router = useRouter()
-const { user, loadProfile } = useAuth()
+const { loadProfile } = useAuth()
 
 const form = reactive({
   username: '',
@@ -186,17 +213,10 @@ const handleSubmit = async () => {
     const phoneDigits = form.phone.replace(/\s/g, '')
     const phoneE164 = phoneDigits ? '+7' + phoneDigits : ''
 
-    await fetch('/api/profile', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      },
-      body: JSON.stringify({
-        username: form.username,
-        email: form.email,
-        phone: phoneE164
-      })
+    await authApi.updateProfile({
+      username: form.username,
+      email: form.email,
+      phone: phoneE164
     })
 
     await loadProfile()
@@ -206,10 +226,6 @@ const handleSubmit = async () => {
   } finally {
     loading.value = false
   }
-}
-
-const handlePhoneInput = (event) => {
-  form.phone = formatPhone(event.target.value)
 }
 
 onMounted(async () => {

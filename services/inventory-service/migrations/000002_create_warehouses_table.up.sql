@@ -1,5 +1,3 @@
--- +goose Up
--- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS warehouses (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
@@ -8,11 +6,4 @@ CREATE TABLE IF NOT EXISTS warehouses (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_warehouses_name ON warehouses(name);
--- +goose StatementEnd
-
--- +goose Down
--- +goose StatementBegin
-DROP INDEX IF EXISTS idx_warehouses_name;
-DROP TABLE IF EXISTS warehouses;
--- +goose StatementEnd
+CREATE INDEX IF NOT EXISTS idx_warehouses_name ON warehouses(name);

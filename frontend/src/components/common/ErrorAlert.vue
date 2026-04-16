@@ -1,7 +1,14 @@
 <template>
-  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <div
+    class="alert alert-danger alert-dismissible fade show"
+    role="alert"
+  >
     {{ message }}
-    <button type="button" class="btn-close" @click="$emit('dismiss')"></button>
+    <button
+      type="button"
+      class="btn-close"
+      @click="$emit('dismiss')"
+    />
   </div>
 </template>
 

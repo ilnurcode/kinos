@@ -50,7 +50,7 @@ func (s *ManufacturersService) CreateManufacturer(ctx context.Context, name stri
 		if err != nil {
 			return fmt.Errorf("ошибка создания производителя: %v", err)
 		}
-		manufacturer = &models.Manufacturer{Id: manufacturerID, Name: name}
+		manufacturer = &models.Manufacturer{ID: manufacturerID, Name: name}
 		return nil
 	})
 	return manufacturer, err
@@ -64,7 +64,7 @@ func (s *ManufacturersService) UpdateManufacturer(ctx context.Context, id uint64
 	err := s.txManager.Do(ctx, func(txCtx context.Context) error {
 		// Проверяем существует ли производитель с таким именем (кроме текущего)
 		existing, _ := s.repo.GetManufacturerByName(txCtx, name)
-		if existing != nil && existing.Id != id {
+		if existing != nil && existing.ID != id {
 			return errs.ErrManufacturerExists
 		}
 		// Проверяем существует ли производитель с таким id
@@ -72,7 +72,7 @@ func (s *ManufacturersService) UpdateManufacturer(ctx context.Context, id uint64
 		if err != nil {
 			return errs.ErrManufacturerNotFound
 		}
-		manufacturer = &models.Manufacturer{Id: id, Name: name}
+		manufacturer = &models.Manufacturer{ID: id, Name: name}
 		if err := s.repo.UpdateManufacturers(txCtx, manufacturer); err != nil {
 			return fmt.Errorf("ошибка обновления производителя: %v", err)
 		}

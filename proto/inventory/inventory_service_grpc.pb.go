@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0--rc2
-// source: inventory_service.proto
+// source: inventory/inventory_service.proto
 
 package inventory
 
@@ -37,16 +37,13 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InventoryServiceClient interface {
-	// Управление запасами товаров
 	CreateInventory(ctx context.Context, in *CreateInventoryRequest, opts ...grpc.CallOption) (*Inventory, error)
 	UpdateInventory(ctx context.Context, in *UpdateInventoryRequest, opts ...grpc.CallOption) (*Inventory, error)
 	GetInventory(ctx context.Context, in *GetInventoryRequest, opts ...grpc.CallOption) (*Inventory, error)
 	GetListInventory(ctx context.Context, in *GetListInventoryRequest, opts ...grpc.CallOption) (*ListInventoryResponse, error)
 	DeleteInventory(ctx context.Context, in *DeleteInventoryRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Резервирование товаров
 	ReserveStock(ctx context.Context, in *ReserveStockRequest, opts ...grpc.CallOption) (*ReserveStockResponse, error)
 	ReleaseReservation(ctx context.Context, in *ReleaseReservationRequest, opts ...grpc.CallOption) (*ReleaseReservationResponse, error)
-	// Управление складами
 	CreateWarehouse(ctx context.Context, in *CreateWarehouseRequest, opts ...grpc.CallOption) (*Warehouse, error)
 	UpdateWarehouse(ctx context.Context, in *UpdateWarehouseRequest, opts ...grpc.CallOption) (*Warehouse, error)
 	GetListWarehouse(ctx context.Context, in *GetListWarehouseRequest, opts ...grpc.CallOption) (*ListWarehouseResponse, error)
@@ -175,16 +172,13 @@ func (c *inventoryServiceClient) DeleteWarehouse(ctx context.Context, in *Delete
 // All implementations must embed UnimplementedInventoryServiceServer
 // for forward compatibility.
 type InventoryServiceServer interface {
-	// Управление запасами товаров
 	CreateInventory(context.Context, *CreateInventoryRequest) (*Inventory, error)
 	UpdateInventory(context.Context, *UpdateInventoryRequest) (*Inventory, error)
 	GetInventory(context.Context, *GetInventoryRequest) (*Inventory, error)
 	GetListInventory(context.Context, *GetListInventoryRequest) (*ListInventoryResponse, error)
 	DeleteInventory(context.Context, *DeleteInventoryRequest) (*emptypb.Empty, error)
-	// Резервирование товаров
 	ReserveStock(context.Context, *ReserveStockRequest) (*ReserveStockResponse, error)
 	ReleaseReservation(context.Context, *ReleaseReservationRequest) (*ReleaseReservationResponse, error)
-	// Управление складами
 	CreateWarehouse(context.Context, *CreateWarehouseRequest) (*Warehouse, error)
 	UpdateWarehouse(context.Context, *UpdateWarehouseRequest) (*Warehouse, error)
 	GetListWarehouse(context.Context, *GetListWarehouseRequest) (*ListWarehouseResponse, error)
@@ -504,5 +498,5 @@ var InventoryService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "inventory_service.proto",
+	Metadata: "inventory/inventory_service.proto",
 }

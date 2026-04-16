@@ -27,13 +27,14 @@ func NewWarehouseRepository(pool *pgxpool.Pool) *WarehouseRepository {
 }
 
 func (r *WarehouseRepository) Create(ctx context.Context, name, city, street, building, building2 string) (*model.Warehouse, error) {
+	querier := GetQuerier(ctx, r.pool)
 	query := `
 		INSERT INTO warehouses (name, city, street, building, building2, created_at)
 		VALUES ($1, $2, $3, $4, $5, NOW())
 		RETURNING id, name, city, street, building, building2, created_at
 	`
 	var w model.Warehouse
-	err := r.pool.QueryRow(ctx, query, name, city, street, building, building2).Scan(
+	err := querier.QueryRow(ctx, query, name, city, street, building, building2).Scan(
 		&w.Id,
 		&w.Name,
 		&w.City,
@@ -49,6 +50,7 @@ func (r *WarehouseRepository) Create(ctx context.Context, name, city, street, bu
 }
 
 func (r *WarehouseRepository) Update(ctx context.Context, id uint64, name, city, street, building, building2 string) (*model.Warehouse, error) {
+	querier := GetQuerier(ctx, r.pool)
 	query := `
 		UPDATE warehouses
 		SET name = $2, city = $3, street = $4, building = $5, building2 = $6, updated_at = NOW()
@@ -56,7 +58,7 @@ func (r *WarehouseRepository) Update(ctx context.Context, id uint64, name, city,
 		RETURNING id, name, city, street, building, building2, updated_at
 	`
 	var w model.Warehouse
-	err := r.pool.QueryRow(ctx, query, id, name, city, street, building, building2).Scan(
+	err := querier.QueryRow(ctx, query, id, name, city, street, building, building2).Scan(
 		&w.Id,
 		&w.Name,
 		&w.City,
@@ -72,6 +74,7 @@ func (r *WarehouseRepository) Update(ctx context.Context, id uint64, name, city,
 }
 
 func (r *WarehouseRepository) GetList(ctx context.Context, limit, offset int32) ([]*model.Warehouse, int32, error) {
+	querier := GetQuerier(ctx, r.pool)
 	query := `
 		SELECT id, name, city, street, building, building2, created_at
 		FROM warehouses
@@ -79,7 +82,7 @@ func (r *WarehouseRepository) GetList(ctx context.Context, limit, offset int32) 
 		LIMIT $1 OFFSET $2
 	`
 
-	rows, err := r.pool.Query(ctx, query, limit, offset)
+	rows, err := querier.Query(ctx, query, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -105,7 +108,7 @@ func (r *WarehouseRepository) GetList(ctx context.Context, limit, offset int32) 
 
 	// Получаем общее количество
 	var total int32
-	err = r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM warehouses`).Scan(&total)
+	err = querier.QueryRow(ctx, `SELECT COUNT(*) FROM warehouses`).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -114,7 +117,8 @@ func (r *WarehouseRepository) GetList(ctx context.Context, limit, offset int32) 
 }
 
 func (r *WarehouseRepository) Delete(ctx context.Context, id uint64) error {
+	querier := GetQuerier(ctx, r.pool)
 	query := `DELETE FROM warehouses WHERE id = $1`
-	_, err := r.pool.Exec(ctx, query, id)
+	_, err := querier.Exec(ctx, query, id)
 	return err
 }

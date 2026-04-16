@@ -1,25 +1,25 @@
 export const storage = {
   get(key) {
     try {
-      return localStorage.getItem(key)
+      return localStorage.getItem(key);
     } catch (e) {
-      return null
+      return null;
     }
   },
 
   set(key, value) {
     try {
-      localStorage.setItem(key, value)
+      localStorage.setItem(key, value);
     } catch (e) {
-      console.error('Storage error:', e)
+      // Тихая ошибка записи
     }
   },
 
   remove(key) {
     try {
-      localStorage.removeItem(key)
+      localStorage.removeItem(key);
     } catch (e) {
-      console.error('Storage error:', e)
+      // Тихая ошибка удаления
     }
-  }
-}
+  },
+};

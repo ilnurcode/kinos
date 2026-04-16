@@ -3,17 +3,17 @@
 package models
 
 type Product struct {
-	Id              uint64
+	ID              uint64
 	Name            string
-	ManufacturersId uint64
-	CategoryId      uint64
+	ManufacturersID uint64
+	CategoryID      uint64
 	Price           float64
 }
 
 type ProductFilter struct {
 	NameContains    *string
-	ManufacturersId *uint64
-	CategoryId      *uint64
+	ManufacturersID *uint64
+	CategoryID      *uint64
 	PriceMin        *float64
 	PriceMax        *float64
 }

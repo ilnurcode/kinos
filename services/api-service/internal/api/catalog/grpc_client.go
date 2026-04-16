@@ -4,8 +4,8 @@ package catalog
 
 import (
 	"context"
+
 	pb "kinos/proto/catalog"
-	"log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -17,15 +17,22 @@ type CatalogClient struct {
 	conn   *grpc.ClientConn
 }
 
-func NewCatalogClient(address string) *CatalogClient {
+func NewCatalogClient(address string) (*CatalogClient, error) {
 	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("failed to connect: %v", err)
+		return nil, err
 	}
 	return &CatalogClient{
 		client: pb.NewCatalogServiceClient(conn),
 		conn:   conn,
+	}, nil
+}
+
+func (c *CatalogClient) Close() error {
+	if c == nil || c.conn == nil {
+		return nil
 	}
+	return c.conn.Close()
 }
 
 // Категории
@@ -66,8 +73,7 @@ func (c *CatalogClient) GetListCategory(ctx context.Context, limit int32, offset
 	return c.client.GetListCategory(ctx, req)
 }
 
-//Производители
-
+// Производители
 func (c *CatalogClient) CreateManufacturer(ctx context.Context, name string) (*pb.Manufacturer, error) {
 	req := &pb.CreateManufacturerRequest{
 		Name: name,
@@ -115,6 +121,7 @@ func (c *CatalogClient) CreateProduct(ctx context.Context, name string, manufact
 	}
 	return c.client.CreateProduct(ctx, req)
 }
+
 func (c *CatalogClient) UpdateProduct(ctx context.Context, id uint64, name string, manufacturersID, categoryID uint64, price float64) (*pb.Product, error) {
 	req := &pb.UpdateProductRequest{
 		Id:             id,
@@ -125,12 +132,14 @@ func (c *CatalogClient) UpdateProduct(ctx context.Context, id uint64, name strin
 	}
 	return c.client.UpdateProduct(ctx, req)
 }
+
 func (c *CatalogClient) DeleteProduct(ctx context.Context, id uint64) (*emptypb.Empty, error) {
 	req := &pb.DeleteProductRequest{
 		Id: id,
 	}
 	return c.client.DeleteProduct(ctx, req)
 }
+
 func (c *CatalogClient) GetProduct(ctx context.Context, name string) (*pb.Product, error) {
 	req := &pb.GetProductRequest{
 		Name: name,

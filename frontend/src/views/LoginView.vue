@@ -5,7 +5,9 @@
         <div class="col-md-6 col-lg-4">
           <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
-              <h4 class="mb-0">Вход</h4>
+              <h4 class="mb-0">
+                Вход
+              </h4>
             </div>
             <div class="card-body">
               <ErrorAlert 
@@ -16,33 +18,45 @@
               
               <form @submit.prevent="handleSubmit">
                 <div class="mb-3">
-                  <label for="email" class="form-label">Email</label>
+                  <label
+                    for="email"
+                    class="form-label"
+                  >Email</label>
                   <input 
-                    type="email" 
-                    class="form-control" 
-                    id="email"
-                    v-model="form.email"
+                    id="email" 
+                    v-model="form.email" 
+                    type="email"
+                    class="form-control"
                     :class="{ 'is-invalid': errors.email }"
                     placeholder="example@mail.ru"
                     required
-                  />
-                  <div class="invalid-feedback" v-if="errors.email">
+                  >
+                  <div
+                    v-if="errors.email"
+                    class="invalid-feedback"
+                  >
                     {{ errors.email }}
                   </div>
                 </div>
                 
                 <div class="mb-3">
-                  <label for="password" class="form-label">Пароль</label>
+                  <label
+                    for="password"
+                    class="form-label"
+                  >Пароль</label>
                   <input 
-                    type="password" 
-                    class="form-control" 
-                    id="password"
-                    v-model="form.password"
+                    id="password" 
+                    v-model="form.password" 
+                    type="password"
+                    class="form-control"
                     :class="{ 'is-invalid': errors.password }"
                     placeholder="••••••••"
                     required
-                  />
-                  <div class="invalid-feedback" v-if="errors.password">
+                  >
+                  <div
+                    v-if="errors.password"
+                    class="invalid-feedback"
+                  >
                     {{ errors.password }}
                   </div>
                 </div>
@@ -52,7 +66,10 @@
                   class="btn btn-primary w-100"
                   :disabled="loading"
                 >
-                  <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                  <span
+                    v-if="loading"
+                    class="spinner-border spinner-border-sm me-2"
+                  />
                   {{ loading ? 'Вход...' : 'Войти' }}
                 </button>
               </form>

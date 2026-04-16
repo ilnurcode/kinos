@@ -54,7 +54,7 @@ func (s *CategoryService) CreateCategory(ctx context.Context, name string) (*mod
 		if err != nil {
 			return fmt.Errorf("ошибка создания категории: %v", err)
 		}
-		category = &models.Category{Id: categoryID, Name: name}
+		category = &models.Category{ID: categoryID, Name: name}
 		return nil
 	})
 	return category, err
@@ -68,7 +68,7 @@ func (s *CategoryService) UpdateCategory(ctx context.Context, id uint64, name st
 	err := s.txManager.Do(ctx, func(txCtx context.Context) error {
 		// Проверяем существует ли категория с таким именем (кроме текущей)
 		existing, _ := s.repo.GetCategoryByName(txCtx, name)
-		if existing != nil && existing.Id != id {
+		if existing != nil && existing.ID != id {
 			return errs.ErrCategoryExists
 		}
 		// Проверяем существует ли категория с таким id
@@ -76,7 +76,7 @@ func (s *CategoryService) UpdateCategory(ctx context.Context, id uint64, name st
 		if err != nil {
 			return errs.ErrCategoryNotFound
 		}
-		category = &models.Category{Id: id, Name: name}
+		category = &models.Category{ID: id, Name: name}
 		if err := s.repo.UpdateCategory(txCtx, category); err != nil {
 			return fmt.Errorf("ошибка обновления категории: %v", err)
 		}

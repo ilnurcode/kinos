@@ -5,7 +5,6 @@ package grpcserver
 import (
 	"context"
 	"log"
-	"runtime/debug"
 	"time"
 
 	"google.golang.org/grpc"
@@ -14,13 +13,6 @@ import (
 // LoggingInterceptor логирует входящие gRPC запросы
 func LoggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	start := time.Now()
-
-	// Panic recovery
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("Panic recovered: %v\n%s", r, debug.Stack())
-		}
-	}()
 
 	resp, err := handler(ctx, req)
 	duration := time.Since(start)
@@ -32,17 +24,4 @@ func LoggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnarySe
 	}
 
 	return resp, err
-}
-
-// RecoveryInterceptor обрабатывает паники в gRPC запросах
-func RecoveryInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("Panic in gRPC handler %s: %v\n%s", info.FullMethod, r, debug.Stack())
-			}
-		}()
-
-		return handler(ctx, req)
-	}
 }

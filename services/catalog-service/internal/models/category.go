@@ -3,6 +3,6 @@
 package models
 
 type Category struct {
-	Id   uint64
+	ID   uint64
 	Name string
 }

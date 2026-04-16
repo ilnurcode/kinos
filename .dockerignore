@@ -1,0 +1,16 @@
+.git
+.idea
+bin
+review-tmp
+.cache
+.local
+**/.env
+**/.env.local
+**/.env.docker
+**/*.log
+**/tmp
+**/temp
+**/node_modules
+**/dist
+**/.DS_Store
+**/Thumbs.db

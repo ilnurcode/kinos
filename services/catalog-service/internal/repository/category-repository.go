@@ -39,7 +39,7 @@ func (r *CategoryRepository) GetListCategory(ctx context.Context, limit, offset 
 	var categories []*models.Category
 	for rows.Next() {
 		var category models.Category
-		if err := rows.Scan(&category.Id, &category.Name); err != nil {
+		if err := rows.Scan(&category.ID, &category.Name); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan list category: %w", err)
 		}
 		categories = append(categories, &category)
@@ -56,7 +56,7 @@ func (r *CategoryRepository) GetListCategory(ctx context.Context, limit, offset 
 func (r *CategoryRepository) GetCategoryByName(ctx context.Context, name string) (*models.Category, error) {
 	var category models.Category
 	querier := GetQuerier(ctx, r.DB)
-	err := querier.QueryRow(ctx, "SELECT * FROM category WHERE category_name=$1", name).Scan(&category.Id, &category.Name)
+	err := querier.QueryRow(ctx, "SELECT * FROM category WHERE category_name=$1", name).Scan(&category.ID, &category.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get category by id: %w", err)
 	}
@@ -66,7 +66,7 @@ func (r *CategoryRepository) GetCategoryByName(ctx context.Context, name string)
 func (r *CategoryRepository) GetCategoryByID(ctx context.Context, id uint64) (*models.Category, error) {
 	var category models.Category
 	querier := GetQuerier(ctx, r.DB)
-	err := querier.QueryRow(ctx, "SELECT * FROM category WHERE category_id=$1", id).Scan(&category.Id, &category.Name)
+	err := querier.QueryRow(ctx, "SELECT * FROM category WHERE category_id=$1", id).Scan(&category.ID, &category.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get category by id: %w", err)
 	}
@@ -85,7 +85,7 @@ func (r *CategoryRepository) CreateCategory(ctx context.Context, category *model
 
 func (r *CategoryRepository) UpdateCategory(ctx context.Context, category *models.Category) error {
 	querier := GetQuerier(ctx, r.DB)
-	_, err := querier.Exec(ctx, "UPDATE category SET category_name=$1 WHERE category_id=$2", category.Name, category.Id)
+	_, err := querier.Exec(ctx, "UPDATE category SET category_name=$1 WHERE category_id=$2", category.Name, category.ID)
 	if err != nil {
 		return fmt.Errorf("failed to update category: %w", err)
 	}

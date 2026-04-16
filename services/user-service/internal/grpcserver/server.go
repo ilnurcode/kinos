@@ -46,6 +46,7 @@ func (s *UserServer) GetUsers(ctx context.Context, req *pb.GetUsersRequest) (*pb
 	users, total, err := s.userSvc.GetAllUsers(ctx, limit, offset)
 	if err != nil {
 		log.Printf("failed get users: %v", err)
+		return nil, status.Errorf(codes.Internal, "Ð¾ÑˆÐ¸Ð±ÐºÐ° Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ñ ÑÐ¿Ð¸ÑÐºÐ° Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÐµÐ¹: %v", err)
 	}
 	var result []*pb.UserItem
 	for _, user := range users {
@@ -200,6 +201,35 @@ func (s *UserServer) UpdateRole(ctx context.Context, req *pb.UpdateRoleRequest) 
 		return nil, status.Errorf(codes.Internal, "ошибка обновления роли: %v", err)
 	}
 	return &pb.UpdateRoleResponse{Success: true}, nil
+}
+
+func (s *UserServer) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
+	userIDRaw := ctx.Value(grpcmiddleware.UserIDKey)
+	if userIDRaw == nil {
+		return nil, status.Error(codes.Unauthenticated, "требуется аутентификация")
+	}
+	currentUserID := userIDRaw.(uint64)
+
+	roleVal := ctx.Value(grpcmiddleware.RoleKey)
+	if roleVal == nil {
+		return nil, status.Error(codes.Unauthenticated, "требуется аутентификация")
+	}
+	if roleVal.(string) != "admin" {
+		return nil, status.Error(codes.PermissionDenied, "доступ запрещен: требуется роль администратора")
+	}
+
+	if currentUserID == req.UserId {
+		return nil, status.Error(codes.PermissionDenied, "нельзя удалить собственную учетную запись")
+	}
+
+	if err := s.authSvc.DeleteUser(ctx, req.UserId); err != nil {
+		if st, ok := status.FromError(err); ok {
+			return nil, st.Err()
+		}
+		return nil, status.Errorf(codes.Internal, "ошибка при удалении пользователя: %v", err)
+	}
+
+	return &pb.DeleteUserResponse{Success: true}, nil
 }
 
 func (s *UserServer) UpdateProfile(ctx context.Context, req *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {

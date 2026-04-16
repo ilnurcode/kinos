@@ -23,17 +23,17 @@ func newMockCategoryRepo() *mockCategoryRepo {
 }
 
 func (m *mockCategoryRepo) CreateCategory(ctx context.Context, category *models.Category) (uint64, error) {
-	category.Id = m.nextID
+	category.ID = m.nextID
 	m.categories[m.nextID] = category
 	m.nextID++
-	return category.Id, nil
+	return category.ID, nil
 }
 
 func (m *mockCategoryRepo) UpdateCategory(ctx context.Context, category *models.Category) error {
-	if _, ok := m.categories[category.Id]; !ok {
+	if _, ok := m.categories[category.ID]; !ok {
 		return repository.ErrNotFound
 	}
-	m.categories[category.Id] = category
+	m.categories[category.ID] = category
 	return nil
 }
 

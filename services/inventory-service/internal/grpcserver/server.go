@@ -173,6 +173,10 @@ func (s *InventoryServer) ReserveStock(ctx context.Context, req *pb.ReserveStock
 		return nil, status.Error(codes.InvalidArgument, "количество должно быть больше нуля")
 	}
 
+	if req.ReservationId == "" {
+		return nil, status.Error(codes.InvalidArgument, "reservation_id is required")
+	}
+
 	err := s.inventorySvc.ReserveStock(ctx, req.ProductId, req.Quantity, req.ReservationId)
 	if err != nil {
 		log.Printf("ReserveStock error: %v", err)
@@ -193,10 +197,14 @@ func (s *InventoryServer) ReserveStock(ctx context.Context, req *pb.ReserveStock
 }
 
 func (s *InventoryServer) ReleaseReservation(ctx context.Context, req *pb.ReleaseReservationRequest) (*pb.ReleaseReservationResponse, error) {
-	log.Printf("ReleaseReservation request: product_id=%d, reservation_id=%s", req.ProductId, req.ReservationId)
+	log.Printf("ReleaseReservation request: product_id=%d", req.ProductId)
 
 	if req.ProductId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "ID товара обязателен")
+	}
+
+	if req.ReservationId == "" {
+		return nil, status.Error(codes.InvalidArgument, "reservation_id is required")
 	}
 
 	releasedQuantity, err := s.inventorySvc.ReleaseReservation(ctx, req.ProductId, req.ReservationId)

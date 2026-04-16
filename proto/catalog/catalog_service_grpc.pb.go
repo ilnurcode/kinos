@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.0--rc2
-// source: catalog_service.proto
+// source: catalog/catalog_service.proto
 
 package catalog
 
@@ -29,6 +29,7 @@ const (
 	CatalogService_UpdateProduct_FullMethodName        = "/catalog.CatalogService/UpdateProduct"
 	CatalogService_DeleteProduct_FullMethodName        = "/catalog.CatalogService/DeleteProduct"
 	CatalogService_GetProduct_FullMethodName           = "/catalog.CatalogService/GetProduct"
+	CatalogService_GetProductByID_FullMethodName       = "/catalog.CatalogService/GetProductByID"
 	CatalogService_GetListProduct_FullMethodName       = "/catalog.CatalogService/GetListProduct"
 	CatalogService_CreateManufacturer_FullMethodName   = "/catalog.CatalogService/CreateManufacturer"
 	CatalogService_UpdateManufacturer_FullMethodName   = "/catalog.CatalogService/UpdateManufacturer"
@@ -41,19 +42,17 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CatalogServiceClient interface {
-	// Категории
 	CreateCategory(ctx context.Context, in *CreateCategoryRequest, opts ...grpc.CallOption) (*Category, error)
 	UpdateCategory(ctx context.Context, in *UpdateCategoryRequest, opts ...grpc.CallOption) (*Category, error)
 	GetCategory(ctx context.Context, in *GetCategoryRequest, opts ...grpc.CallOption) (*Category, error)
 	GetListCategory(ctx context.Context, in *GetListCategoryRequest, opts ...grpc.CallOption) (*ListCategoriesResponse, error)
 	DeleteCategory(ctx context.Context, in *DeleteCategoryRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Товары
 	CreateProduct(ctx context.Context, in *CreateProductRequest, opts ...grpc.CallOption) (*Product, error)
 	UpdateProduct(ctx context.Context, in *UpdateProductRequest, opts ...grpc.CallOption) (*Product, error)
 	DeleteProduct(ctx context.Context, in *DeleteProductRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetProduct(ctx context.Context, in *GetProductRequest, opts ...grpc.CallOption) (*Product, error)
+	GetProductByID(ctx context.Context, in *GetProductByIDRequest, opts ...grpc.CallOption) (*Product, error)
 	GetListProduct(ctx context.Context, in *GetListProductRequest, opts ...grpc.CallOption) (*ListProductsResponse, error)
-	// Производители
 	CreateManufacturer(ctx context.Context, in *CreateManufacturerRequest, opts ...grpc.CallOption) (*Manufacturer, error)
 	UpdateManufacturer(ctx context.Context, in *UpdateManufacturerRequest, opts ...grpc.CallOption) (*Manufacturer, error)
 	GetManufacturer(ctx context.Context, in *GetManufacturerRequest, opts ...grpc.CallOption) (*Manufacturer, error)
@@ -159,6 +158,16 @@ func (c *catalogServiceClient) GetProduct(ctx context.Context, in *GetProductReq
 	return out, nil
 }
 
+func (c *catalogServiceClient) GetProductByID(ctx context.Context, in *GetProductByIDRequest, opts ...grpc.CallOption) (*Product, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Product)
+	err := c.cc.Invoke(ctx, CatalogService_GetProductByID_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *catalogServiceClient) GetListProduct(ctx context.Context, in *GetListProductRequest, opts ...grpc.CallOption) (*ListProductsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListProductsResponse)
@@ -223,19 +232,17 @@ func (c *catalogServiceClient) DeleteManufacturer(ctx context.Context, in *Delet
 // All implementations must embed UnimplementedCatalogServiceServer
 // for forward compatibility.
 type CatalogServiceServer interface {
-	// Категории
 	CreateCategory(context.Context, *CreateCategoryRequest) (*Category, error)
 	UpdateCategory(context.Context, *UpdateCategoryRequest) (*Category, error)
 	GetCategory(context.Context, *GetCategoryRequest) (*Category, error)
 	GetListCategory(context.Context, *GetListCategoryRequest) (*ListCategoriesResponse, error)
 	DeleteCategory(context.Context, *DeleteCategoryRequest) (*emptypb.Empty, error)
-	// Товары
 	CreateProduct(context.Context, *CreateProductRequest) (*Product, error)
 	UpdateProduct(context.Context, *UpdateProductRequest) (*Product, error)
 	DeleteProduct(context.Context, *DeleteProductRequest) (*emptypb.Empty, error)
 	GetProduct(context.Context, *GetProductRequest) (*Product, error)
+	GetProductByID(context.Context, *GetProductByIDRequest) (*Product, error)
 	GetListProduct(context.Context, *GetListProductRequest) (*ListProductsResponse, error)
-	// Производители
 	CreateManufacturer(context.Context, *CreateManufacturerRequest) (*Manufacturer, error)
 	UpdateManufacturer(context.Context, *UpdateManufacturerRequest) (*Manufacturer, error)
 	GetManufacturer(context.Context, *GetManufacturerRequest) (*Manufacturer, error)
@@ -277,6 +284,9 @@ func (UnimplementedCatalogServiceServer) DeleteProduct(context.Context, *DeleteP
 }
 func (UnimplementedCatalogServiceServer) GetProduct(context.Context, *GetProductRequest) (*Product, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetProduct not implemented")
+}
+func (UnimplementedCatalogServiceServer) GetProductByID(context.Context, *GetProductByIDRequest) (*Product, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetProductByID not implemented")
 }
 func (UnimplementedCatalogServiceServer) GetListProduct(context.Context, *GetListProductRequest) (*ListProductsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetListProduct not implemented")
@@ -479,6 +489,24 @@ func _CatalogService_GetProduct_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CatalogService_GetProductByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProductByIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CatalogServiceServer).GetProductByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CatalogService_GetProductByID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CatalogServiceServer).GetProductByID(ctx, req.(*GetProductByIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CatalogService_GetListProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetListProductRequest)
 	if err := dec(in); err != nil {
@@ -631,6 +659,10 @@ var CatalogService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CatalogService_GetProduct_Handler,
 		},
 		{
+			MethodName: "GetProductByID",
+			Handler:    _CatalogService_GetProductByID_Handler,
+		},
+		{
 			MethodName: "GetListProduct",
 			Handler:    _CatalogService_GetListProduct_Handler,
 		},
@@ -656,5 +688,5 @@ var CatalogService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "catalog_service.proto",
+	Metadata: "catalog/catalog_service.proto",
 }

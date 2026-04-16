@@ -3,22 +3,38 @@
     <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Управление запасами</h1>
-        <button class="btn btn-primary" @click="openCreateModal">
-          <i class="bi bi-plus-lg"></i> Добавить запас
+        <button
+          class="btn btn-primary"
+          @click="openCreateModal"
+        >
+          <i class="bi bi-plus-lg" /> Добавить запас
         </button>
       </div>
 
-      <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />
+      <ErrorAlert
+        v-if="error"
+        :message="error"
+        @dismiss="error = null"
+      />
 
-      <div v-if="loading" class="text-center py-5">
+      <div
+        v-if="loading"
+        class="text-center py-5"
+      >
         <LoadingSpinner text="Загрузка запасов..." />
       </div>
 
-      <div v-else-if="inventory.length === 0" class="alert alert-info">
+      <div
+        v-else-if="inventory.length === 0"
+        class="alert alert-info"
+      >
         Запасы не найдены
       </div>
 
-      <div v-else class="card">
+      <div
+        v-else
+        class="card"
+      >
         <div class="card-body">
           <table class="table table-hover">
             <thead class="table-light">
@@ -33,7 +49,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in inventory" :key="item.id">
+              <tr
+                v-for="item in inventory"
+                :key="item.id"
+              >
                 <td>{{ item.id }}</td>
                 <td>{{ getProductName(item.product_id) }}</td>
                 <td>{{ item.quantity }}</td>
@@ -45,10 +64,16 @@
                 </td>
                 <td>{{ item.warehouse_location }}</td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary me-2" @click="openEditModal(item)">
+                  <button
+                    class="btn btn-sm btn-outline-primary me-2"
+                    @click="openEditModal(item)"
+                  >
                     ✏️
                   </button>
-                  <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(item)">
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    @click="confirmDelete(item)"
+                  >
                     🗑️
                   </button>
                 </td>
@@ -61,20 +86,42 @@
   </div>
 
   <!-- Модальное окно -->
-  <div class="modal fade" :class="{ show: showModal }" :style="modalStyle" tabindex="-1" @click.self="closeModal">
+  <div
+    class="modal fade"
+    :class="{ show: showModal }"
+    :style="modalStyle"
+    tabindex="-1"
+    @click.self="closeModal"
+  >
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">{{ isEditing ? 'Редактировать запас' : 'Добавить запас' }}</h5>
-          <button type="button" class="btn-close" @click="closeModal"></button>
+          <h5 class="modal-title">
+            {{ isEditing ? 'Редактировать запас' : 'Добавить запас' }}
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            @click="closeModal"
+          />
         </div>
         <div class="modal-body">
           <form @submit.prevent="saveInventory">
             <div class="mb-3">
               <label class="form-label">Товар *</label>
-              <select class="form-select" v-model="form.product_id" required>
-                <option value="">Выберите товар</option>
-                <option v-for="product in products" :key="product.id" :value="product.id">
+              <select
+                v-model="form.product_id"
+                class="form-select"
+                required
+              >
+                <option value="">
+                  Выберите товар
+                </option>
+                <option
+                  v-for="product in products"
+                  :key="product.id"
+                  :value="product.id"
+                >
                   {{ product.name }}
                 </option>
               </select>
@@ -82,18 +129,28 @@
             <div class="mb-3">
               <label class="form-label">Количество *</label>
               <input
+                v-model.number="form.quantity"
                 type="number"
                 class="form-control"
-                v-model.number="form.quantity"
                 required
                 min="0"
-              />
+              >
             </div>
             <div class="mb-3">
               <label class="form-label">Склад *</label>
-              <select class="form-select" v-model="form.warehouse_location" required>
-                <option value="">Выберите склад</option>
-                <option v-for="wh in warehouses" :key="wh.id" :value="wh.name">
+              <select
+                v-model="form.warehouse_location"
+                class="form-select"
+                required
+              >
+                <option value="">
+                  Выберите склад
+                </option>
+                <option
+                  v-for="wh in warehouses"
+                  :key="wh.id"
+                  :value="wh.name"
+                >
                   {{ wh.name }}{{ wh.city ? ` (${wh.city})` : '' }}
                 </option>
               </select>
@@ -101,8 +158,19 @@
           </form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="closeModal">Отмена</button>
-          <button type="button" class="btn btn-primary" @click="saveInventory" :disabled="saving">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="closeModal"
+          >
+            Отмена
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            :disabled="saving"
+            @click="saveInventory"
+          >
             {{ saving ? 'Сохранение...' : 'Сохранить' }}
           </button>
         </div>
@@ -115,6 +183,7 @@
 import { adminApi } from '@/api/admin'
 import ErrorAlert from '@/components/common/ErrorAlert.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import { formatError } from '@/utils/errorHandler'
 import { computed, onMounted, ref } from 'vue'
 
 const inventory = ref([])

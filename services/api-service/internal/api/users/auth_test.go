@@ -80,6 +80,10 @@ func (m *mockUserClient) UpdateRole(ctx context.Context, token, role string, use
 	return &pb.UpdateRoleResponse{Success: true}, nil
 }
 
+func (m *mockUserClient) DeleteUser(ctx context.Context, token string, userID uint64) (*pb.DeleteUserResponse, error) {
+	return &pb.DeleteUserResponse{Success: true}, nil
+}
+
 func TestHandler_Register(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

@@ -1,8 +1,15 @@
 <template>
   <nav aria-label="Пагинация">
     <ul class="pagination justify-content-center">
-      <li class="page-item" :class="{ disabled: currentPage === 1 }">
-        <a class="page-link" href="#" @click.prevent="changePage(currentPage - 1)">
+      <li
+        class="page-item"
+        :class="{ disabled: currentPage === 1 }"
+      >
+        <a
+          class="page-link"
+          href="#"
+          @click.prevent="changePage(currentPage - 1)"
+        >
           ← Пред.
         </a>
       </li>
@@ -13,13 +20,24 @@
         class="page-item" 
         :class="{ active: page === currentPage }"
       >
-        <a class="page-link" href="#" @click.prevent="changePage(page)">
+        <a
+          class="page-link"
+          href="#"
+          @click.prevent="changePage(page)"
+        >
           {{ page }}
         </a>
       </li>
       
-      <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-        <a class="page-link" href="#" @click.prevent="changePage(currentPage + 1)">
+      <li
+        class="page-item"
+        :class="{ disabled: currentPage === totalPages }"
+      >
+        <a
+          class="page-link"
+          href="#"
+          @click.prevent="changePage(currentPage + 1)"
+        >
           След. →
         </a>
       </li>

@@ -1,9 +1,20 @@
 <template>
-  <div class="loading-spinner" :class="{ 'fullscreen': fullscreen }">
-    <div class="spinner-border text-primary" role="status">
+  <div
+    class="loading-spinner"
+    :class="{ 'fullscreen': fullscreen }"
+  >
+    <div
+      class="spinner-border text-primary"
+      role="status"
+    >
       <span class="visually-hidden">{{ text }}</span>
     </div>
-    <p v-if="text" class="mt-2 text-muted">{{ text }}</p>
+    <p
+      v-if="text"
+      class="mt-2 text-muted"
+    >
+      {{ text }}
+    </p>
   </div>
 </template>
 
