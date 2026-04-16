@@ -140,13 +140,6 @@ make local-logs
 - inventory-db: `localhost:54323`
 - order-db: `localhost:54324`
 
-## Проверки перед публикацией
-
-- не добавлять в git реальные `.env`, `.env.docker`, `frontend/.env`
-- перед публикацией проверить `git status`
-- для проверки чистого старта использовать `make reset`, затем `make up`
-- убедиться, что проходят `make test`, `make lint`, `npm run build`
-
 ## Лицензия
 
 MIT
